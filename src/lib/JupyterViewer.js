@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Ansi from 'ansi-to-react';
 import ReactMarkdown from 'react-markdown';
@@ -13,9 +13,16 @@ import hljsStyles from './hljsStyles';
 
 /* The code cells */
 function BlockSource(props) {
+  // Get component properties
+  const { onSubmit } = props;
+
+  // Get cell properties
   const metadata = props.cell['metadata'];
   const source = props.cell['source'];
   const type = props.cell['cell_type'];
+
+  // Reference the textarea used for the code cell specifically
+  const codeContentRef = useRef(null);
 
   const [state, setState] = useState({
     prevDisplay: 1,
@@ -44,81 +51,33 @@ function BlockSource(props) {
   switch (type) {
     case 'code':
       executionCount = props.cell['execution_count'];
-      const {
-        hljsStyle,
-        lineNumberContainerStyle,
-        lineNumberStyle,
-        codeContainerStyle,
-      } = props.codeBlockStyles ? props.codeBlockStyles : {};
+      const adjustTextArea = () => {
+        setTimeout(() => {
+          const textArea = codeContentRef.current;
+          if (textArea) {
+            textArea.style.height = 'auto';
+            textArea.style.height = 16 + textArea.scrollHeight + 'px';
+          }
+        }, 0);
+      };
+      const keyCallback = (e) => {
+        adjustTextArea();
+
+        // If shift-enter - call the callback
+        if (e.shiftKey && e.which === 13) {
+          onSubmit(e);
+          e.preventDefault();
+        }
+      };
 
       htmlContent = (
         <div className="cell-content source-code">
-          {/* Line numbers */}
-          {!props.showLineNumbers ? null : (
-            <SyntaxHighlighter
-              language={props.language}
-              style={hljsStyle ? hljsStyles[hljsStyle] : hljsStyles.vs}
-              codeTagProps={{
-                style: {
-                  fontFamily: "Menlo, Consolas, 'DejaVu Sans Mono', monospace",
-                  fontSize: '13px',
-                },
-              }}
-              customStyle={
-                hljsStyle
-                  ? lineNumberContainerStyle
-                  : {
-                      width: '37px',
-                      margin: '0 0 0 0',
-                      padding: '5px 0 5px 0',
-                      boxSizing: 'border-box',
-                      background: '#EEEEEE',
-                      border: 'solid 1px #E0E0E0',
-                      overflow: 'hidden',
-                    }
-              }
-              showLineNumbers={true}
-              lineNumberStyle={
-                hljsStyle
-                  ? lineNumberStyle
-                  : {
-                      width: '37px',
-                      padding: '0 8px 0 8px',
-                      boxSizing: 'border-box',
-                      color: '#999999',
-                    }
-              }
-            >
-              {source.map((item, index) => (index === 0 ? ' ' : '\n')).join('')}
-            </SyntaxHighlighter>
-          )}
           {/* Actual code cell */}
-          <div className="source-code-main">
-            <SyntaxHighlighter
-              language={props.language}
-              style={hljsStyle ? hljsStyles[hljsStyle] : hljsStyles.vs}
-              codeTagProps={{
-                style: {
-                  fontFamily: "Menlo, Consolas, 'DejaVu Sans Mono', monospace",
-                  fontSize: '13px',
-                },
-              }}
-              customStyle={
-                hljsStyle
-                  ? codeContainerStyle
-                  : {
-                      margin: '0 0 0 0',
-                      padding: '5px 4px 5px 4px',
-                      boxSizing: 'border-box',
-                      background: '#F5F5F5',
-                      border: 'solid 1px #E0E0E0',
-                      flex: 1,
-                    }
-              }
-            >
-              {source.join('')}
-            </SyntaxHighlighter>
-          </div>
+          <textarea
+            className="source-code-main"
+            onKeyDown={keyCallback}
+            ref={codeContentRef}
+          ></textarea>
         </div>
       );
       break;
@@ -142,7 +101,7 @@ function BlockSource(props) {
       htmlContent = <div>{`Cell Type ${type} not supported...`}</div>;
       break;
   }
-  
+
   return (
     <div className="block-source">
       {/* The blue highlight for the cell */}
@@ -331,31 +290,40 @@ function BlockOutput(props) {
 function JupyterViewer(props) {
   // -1: auto, 0: hide, 1: show, 2: scroll
   const DISPLAYS = ['hide', 'show', 'scroll'];
-
   const [clickCellIndex, setCellIndex] = useState(-1);
-  // const [state, setState] = useState({
-  //   clickCellIndex: -1,
-  // });
+  const [cells, setCells] = useState([]);
+
+  function addCell(type) {
+    let newCell = [
+      {
+        cell_type: type,
+        source: ['meme'],
+        metadata: {},
+        execution_count: ' ',
+      },
+    ];
+    setCells(cells.concat(newCell));
+  }
 
   return (
     <div className="jupyter-viewer">
-      {props.rawIpynb['cells'].map((cell, index) => {
+      {cells.map((cell, index) => {
         return (
           <div
             key={index}
             className="block"
             onMouseDown={() => {
-              setCellIndex(index );
+              setCellIndex(index);
             }}
           >
             {!('cell_type' in cell) ? null : (
               <BlockSource
                 cell={cell}
-                language={props.language}
                 highlighted={clickCellIndex === index}
                 display={DISPLAYS.indexOf(props.displaySource)}
-                showLineNumbers={props.showLineNumbers}
-                codeBlockStyles={props.codeBlockStyles}
+                onSubmit={(e) => {
+                  alert('Cell submitted');
+                }}
               />
             )}
             {!('outputs' in cell) ? null : (
@@ -373,12 +341,22 @@ function JupyterViewer(props) {
           </div>
         );
       })}
+      <div className="add-buttons">
+        <button className="add-code-btn" onClick={(_) => addCell('code')}>
+          + Code
+        </button>
+        <button
+          className="add-markdown-btn"
+          onClick={(_) => addCell('markdown')}
+        >
+          + Markdown
+        </button>
+      </div>
     </div>
   );
 }
 
 JupyterViewer.defaultProps = {
-  language: 'python',
   showLineNumbers: true,
   mediaAlign: 'center',
   displaySource: 'auto',
@@ -388,7 +366,6 @@ JupyterViewer.defaultProps = {
 
 JupyterViewer.propTypes = {
   rawIpynb: PropTypes.object.isRequired,
-  language: PropTypes.string,
   showLineNumbers: PropTypes.bool,
   mediaAlign: PropTypes.oneOf(['left', 'center', 'right']),
   displaySource: PropTypes.oneOf(['auto', 'hide', 'show']),
