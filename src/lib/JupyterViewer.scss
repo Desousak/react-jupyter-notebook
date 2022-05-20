@@ -23,12 +23,13 @@ blockquote {
       cursor: pointer;
       font-size: 1rem;
       font-family: monospace;
+      user-select: none;
 
       &:hover {
         background: rgb(211, 211, 211);
       }
       &:active {
-        background: rgb(200, 200, 200);
+        background: rgb(180, 180, 180);
       }
     }
   }

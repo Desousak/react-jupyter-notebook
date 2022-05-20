@@ -15,40 +15,19 @@ import hljsStyles from './hljsStyles';
 function BlockSource(props) {
   // Get component properties
   const { onSubmit } = props;
-
   // Get cell properties
-  const metadata = props.cell['metadata'];
-  const source = props.cell['source'];
-  const type = props.cell['cell_type'];
-
+  const { cell_type, content } = props.cell;
   // Reference the textarea used for the code cell specifically
   const codeContentRef = useRef(null);
-
-  const [state, setState] = useState({
-    prevDisplay: 1,
-    display: 1,
-    contentHeight: 0,
-  });
-
-  // Determine whether to display the code cell
-  if (props.display !== state.prevDisplay) {
-    let newDisplay = props.display;
-    if (newDisplay === -1) {
-      if (
-        metadata['jupyter'] !== undefined &&
-        metadata['jupyter']['source_hidden']
-      ) {
-        newDisplay = 0;
-      }
-    }
-
-    setState({ ...state, prevDisplay: props.display, display: newDisplay });
-  }
+  // Whether to show or hide the cell (0/1)
+  const [cellShown, setCellShown] = useState(1);
+  // Content kept within the cell
+  const contentRef = useRef(content ? content : []);
 
   // Generate cell contents
   let htmlContent,
     executionCount = null;
-  switch (type) {
+  switch (cell_type) {
     case 'code':
       executionCount = props.cell['execution_count'];
       const adjustTextArea = () => {
@@ -65,8 +44,16 @@ function BlockSource(props) {
 
         // If shift-enter - call the callback
         if (e.shiftKey && e.which === 13) {
-          onSubmit(e);
+          onSubmit(contentRef.current);
           e.preventDefault();
+        }
+      };
+      const updateContent = (e) => {
+        // Store the changes to the content
+        // Done so that we can restore it if the cell is hidden
+        const textArea = codeContentRef.current;
+        if (textArea) {
+          contentRef.current = textArea.value.split('\n');
         }
       };
 
@@ -77,28 +64,30 @@ function BlockSource(props) {
             className="source-code-main"
             onKeyDown={keyCallback}
             ref={codeContentRef}
+            defaultValue={contentRef.current.join('\n')}
+            onChange={updateContent}
           ></textarea>
         </div>
       );
       break;
     case 'markdown':
-      // '$$' has to be in a separate new line to be rendered as a block math equation.
-      const re = /\n?\s*\$\$\s*\n?/g;
-      let newSource = source.join('').replaceAll(re, '\n$$$\n');
+      // // '$$' has to be in a separate new line to be rendered as a block math equation.
+      // const re = /\n?\s*\$\$\s*\n?/g;
+      // let newSource = source.join('').replaceAll(re, '\n$$$\n');
 
-      htmlContent = (
-        <div className="cell-content source-markdown">
-          <ReactMarkdown
-            remarkPlugins={[RemarkGFM, RemarkMath]}
-            rehypePlugins={[RehypeKatex]}
-          >
-            {newSource}
-          </ReactMarkdown>
-        </div>
-      );
+      // htmlContent = (
+      //   <div className="cell-content source-markdown">
+      //     <ReactMarkdown
+      //       remarkPlugins={[RemarkGFM, RemarkMath]}
+      //       rehypePlugins={[RehypeKatex]}
+      //     >
+      //       {newSource}
+      //     </ReactMarkdown>
+      //   </div>
+      // );
       break;
     default:
-      htmlContent = <div>{`Cell Type ${type} not supported...`}</div>;
+      htmlContent = <div>{`Cell Type ${cell_type} not supported...`}</div>;
       break;
   }
 
@@ -107,12 +96,10 @@ function BlockSource(props) {
       {/* The blue highlight for the cell */}
       <div
         className={props.highlighted ? 'block-light-selected' : 'block-light'}
-        onClick={() => {
-          setState({ ...state, display: (state.display + 1) % 2 });
-        }}
+        onClick={() => setCellShown((cellShown + 1) % 2)}
       />
 
-      {state.display === 0 ? (
+      {cellShown === 0 ? (
         <div className="block-hidden" />
       ) : (
         <div className="cell-row">
@@ -129,55 +116,32 @@ function BlockSource(props) {
 
 /* The cell output */
 function BlockOutput(props) {
-  const metadata = props.cell['metadata'];
   const outputs = props.cell['outputs'];
-
-  const [state, setState] = useState({
-    highlighted: false,
-    prevDisplay: 1,
-    display: 1,
-    contentHeight: 0,
-  });
+  // Whether to show or hide the cell (0/1)
+  const [cellShown, setCellShown] = useState(3);
+  // Store the height of the component
+  const [contentHeight, setContentHeight] = useState(0);
+  // Update the height when the container changes
   const contentRef = useCallback((node) => {
-    if (node) {
-      setState((state) => ({ ...state, contentHeight: node.offsetHeight }));
-    }
+    if (node) setContentHeight(node.offsetHeight);
   }, []);
-
-  if (props.display !== state.prevDisplay) {
-    let newDisplay = props.display;
-    if (newDisplay === -1) {
-      if (
-        metadata['collapsed'] ||
-        (metadata['jupyter'] !== undefined &&
-          metadata['jupyter']['outputs_hidden'])
-      ) {
-        newDisplay = 0;
-      } else if (metadata['scrolled']) {
-        newDisplay = 2;
-      }
-    }
-
-    setState({ ...state, prevDisplay: props.display, display: newDisplay });
-  }
 
   return (
     <div className="block-output">
+      {/* Hide / Show the output */}
       <div
         className={props.highlighted ? 'block-light-selected' : 'block-light'}
-        onClick={() => {
-          setState({ ...state, display: (state.display + 1) % 3 });
-        }}
+        onClick={() => setCellShown((cellShown + 1) % 3)}
       />
-      {state.display === 0 ? (
+      {cellShown === 0 ? (
         <div className="block-hidden" />
       ) : (
         <div
           className="block-output-content"
           style={
-            state.display === 2
+            cellShown === 2
               ? {
-                  maxHeight: state.contentHeight,
+                  maxHeight: contentHeight,
                   height: 200,
                   boxShadow: 'inset 0 0 6px 2px rgb(0 0 0 / 30%)',
                   resize: 'vertical',
@@ -297,9 +261,9 @@ function JupyterViewer(props) {
     let newCell = [
       {
         cell_type: type,
-        source: ['meme'],
-        metadata: {},
         execution_count: ' ',
+        content: [],
+        outputs: [],
       },
     ];
     setCells(cells.concat(newCell));
@@ -308,6 +272,22 @@ function JupyterViewer(props) {
   return (
     <div className="jupyter-viewer">
       {cells.map((cell, index) => {
+        const runCell = (content) => {
+          // TODO: ADD RUNNING INFORMATION, CELL NUMBERING, AND RESPONSE FROM BACKEND
+          const newCell = {
+            ...cell,
+            content: content,
+            outputs: [
+              {
+                name: 'stdout',
+                output_type: 'stream',
+                text: ['Warnings\n', 'after\n', ...content],
+              },
+            ],
+          };
+          setCells(cells.map((c, i) => (i === index ? newCell : c)));
+        };
+
         return (
           <div
             key={index}
@@ -321,9 +301,7 @@ function JupyterViewer(props) {
                 cell={cell}
                 highlighted={clickCellIndex === index}
                 display={DISPLAYS.indexOf(props.displaySource)}
-                onSubmit={(e) => {
-                  alert('Cell submitted');
-                }}
+                onSubmit={runCell}
               />
             )}
             {!('outputs' in cell) ? null : (
