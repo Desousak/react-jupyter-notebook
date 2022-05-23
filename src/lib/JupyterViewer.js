@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Ansi from 'ansi-to-react';
 import ReactMarkdown from 'react-markdown';
@@ -24,83 +24,100 @@ function BlockSource(props) {
   // Content kept within the cell
   const contentRef = useRef(content ? content : []);
 
+  // Flag to determine whether to show the markdown content
+  const [showMarkdown, setShowMarkdown] = useState(false);
+
   // Generate cell contents
-  let htmlContent,
-    runButton,
+  let htmlContent, // Code editor itself
+    callbackFunc, // The function used when the user tries to run the cell
+    markdownElem, // The processed markdown text
     executionCount = null;
+
   switch (cell_type) {
     case 'code':
       executionCount = props.cell['execution_count'];
-      const adjustTextArea = () => {
-        setTimeout(() => {
-          const textArea = codeContentRef.current;
-          if (textArea) {
-            textArea.style.height = 'auto';
-            textArea.style.height = 16 + textArea.scrollHeight + 'px';
-          }
-        }, 0);
-      };
-      const keyCallback = (e) => {
-        adjustTextArea();
-
-        // If shift-enter - call the callback
-        if (e.shiftKey && e.which === 13) {
-          onSubmit(contentRef.current);
-          e.preventDefault();
-        }
-      };
-      const updateContent = (e) => {
-        // Store the changes to the content
-        // Done so that we can restore it if the cell is hidden
-        const textArea = codeContentRef.current;
-        if (textArea) {
-          // contentRef.current = textArea.value.split('\n');
-          contentRef.current = textArea.value.split(/^/m);
-        }
-      };
-
-      runButton = (
-        <button
-          onClick={() => onSubmit(contentRef.current)}
-          className="cell-run-btn"
-        >
-          &#9658;
-        </button>
-      );
-      htmlContent = (
-        <div className="cell-content source-code">
-          {/* Actual code cell */}
-          <textarea
-            className="source-code-main"
-            onKeyDown={keyCallback}
-            ref={codeContentRef}
-            defaultValue={contentRef.current.join('\n')}
-            onChange={updateContent}
-          ></textarea>
-        </div>
-      );
+      callbackFunc = onSubmit;
       break;
     case 'markdown':
-      // '$$' has to be in a separate new line to be rendered as a block math equation.
-      const re = /\n?\s*\$\$\s*\n?/g;
-      // let newSource = source.join('').replaceAll(re, '\n$$$\n');
-      let newSource = 'markdown test....';
+      callbackFunc = () => setShowMarkdown(true);
+      if (showMarkdown) {
+        // '$$' has to be in a separate new line to be rendered as a block math equation.
+        const re = /\n?\s*\$\$\s*\n?/g;
+        let newSource = contentRef.current.join('').replaceAll(re, '\n$$$\n');
 
-      htmlContent = (
-        <div className="cell-content source-markdown">
-          <ReactMarkdown
-            remarkPlugins={[RemarkGFM, RemarkMath]}
-            rehypePlugins={[RehypeKatex]}
+        const reEnableEditing = () => setShowMarkdown(false);
+        markdownElem = (
+          <div
+            className="cell-content source-markdown"
+            onDoubleClick={reEnableEditing}
           >
-            {newSource}
-          </ReactMarkdown>
-        </div>
-      );
+            <ReactMarkdown
+              remarkPlugins={[RemarkGFM, RemarkMath]}
+              rehypePlugins={[RehypeKatex]}
+            >
+              {newSource}
+            </ReactMarkdown>
+          </div>
+        );
+      }
       break;
     default:
-      htmlContent = <div>{`Cell Type ${cell_type} not supported...`}</div>;
+      // htmlContent = <div>{`Cell Type ${cell_type} not supported...`}</div>;
       break;
   }
+
+  const adjustTextArea = () => {
+    const textArea = codeContentRef.current;
+    if (textArea) {
+      textArea.style.height = 'auto';
+      textArea.style.height = textArea.scrollHeight + 'px';
+    }
+  };
+  const updateContent = (e) => {
+    // Store the changes to the content
+    // Done so that we can restore it if the cell is hidden
+    const textArea = codeContentRef.current;
+    if (textArea) {
+      contentRef.current = textArea.value.split(/^/m);
+    }
+  };
+  const keyCallback = (e) => {
+    // If shift-enter - call the callback
+    if (e.shiftKey && e.which === 13) {
+      callbackFunc(contentRef.current);
+      e.preventDefault();
+    }
+  };
+
+  let runButton = showMarkdown ? null : (
+    <button
+      onClick={() => callbackFunc(contentRef.current)}
+      className="cell-run-btn"
+    >
+      &#9658;
+    </button>
+  );
+  htmlContent = (
+    <div className="cell-content source-code">
+      {/* Actual code cell */}
+      <textarea
+        className="source-code-main"
+        onKeyDown={keyCallback}
+        ref={codeContentRef}
+        defaultValue={contentRef.current.join('\n')}
+        onChange={updateContent}
+        onInput={adjustTextArea}
+      ></textarea>
+    </div>
+  );
+
+  // Auto adjust the text area size on load
+  // Helps when using the markdown editor
+  useEffect(() => {
+    if (!showMarkdown) {
+      adjustTextArea();
+    }
+  }, [showMarkdown]);
 
   return (
     <div className="block-source">
@@ -124,7 +141,7 @@ function BlockSource(props) {
             </pre>
           </div>
           {/* Code itself (or markdown) */}
-          {htmlContent}
+          {showMarkdown ? markdownElem : htmlContent}
         </div>
       )}
     </div>
@@ -135,13 +152,7 @@ function BlockSource(props) {
 function BlockOutput(props) {
   const outputs = props.cell['outputs'];
   // Whether to show or hide the cell (0/1)
-  const [cellShown, setCellShown] = useState(3);
-  // Store the height of the component
-  const [contentHeight, setContentHeight] = useState(0);
-  // Update the height when the container changes
-  const contentRef = useCallback((node) => {
-    if (node) setContentHeight(node.offsetHeight);
-  }, []);
+  const [cellShown, setCellShown] = useState(1);
 
   return (
     <div className="block-output">
@@ -158,7 +169,7 @@ function BlockOutput(props) {
           style={
             cellShown === 2
               ? {
-                  maxHeight: contentHeight,
+                  maxHeight: '24em', // Hard coded to a reasonable value
                   height: 200,
                   boxShadow: 'inset 0 0 6px 2px rgb(0 0 0 / 30%)',
                   resize: 'vertical',
@@ -166,7 +177,7 @@ function BlockOutput(props) {
               : null
           }
         >
-          <div ref={contentRef}>
+          <div>
             {outputs.map((output, index) => {
               let executionCount;
               let htmlContent;

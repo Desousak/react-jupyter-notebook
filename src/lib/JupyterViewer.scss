@@ -166,6 +166,9 @@ blockquote {
 
         .source-code-main {
           flex: 1;
+          display: block;
+          resize: none;
+          overflow-y: hidden;
         }
       }
 
