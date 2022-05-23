@@ -26,6 +26,7 @@ function BlockSource(props) {
 
   // Generate cell contents
   let htmlContent,
+    runButton,
     executionCount = null;
   switch (cell_type) {
     case 'code':
@@ -53,10 +54,19 @@ function BlockSource(props) {
         // Done so that we can restore it if the cell is hidden
         const textArea = codeContentRef.current;
         if (textArea) {
-          contentRef.current = textArea.value.split('\n');
+          // contentRef.current = textArea.value.split('\n');
+          contentRef.current = textArea.value.split(/^/m);
         }
       };
 
+      runButton = (
+        <button
+          onClick={() => onSubmit(contentRef.current)}
+          className="cell-run-btn"
+        >
+          &#9658;
+        </button>
+      );
       htmlContent = (
         <div className="cell-content source-code">
           {/* Actual code cell */}
@@ -71,20 +81,21 @@ function BlockSource(props) {
       );
       break;
     case 'markdown':
-      // // '$$' has to be in a separate new line to be rendered as a block math equation.
-      // const re = /\n?\s*\$\$\s*\n?/g;
+      // '$$' has to be in a separate new line to be rendered as a block math equation.
+      const re = /\n?\s*\$\$\s*\n?/g;
       // let newSource = source.join('').replaceAll(re, '\n$$$\n');
+      let newSource = 'markdown test....';
 
-      // htmlContent = (
-      //   <div className="cell-content source-markdown">
-      //     <ReactMarkdown
-      //       remarkPlugins={[RemarkGFM, RemarkMath]}
-      //       rehypePlugins={[RehypeKatex]}
-      //     >
-      //       {newSource}
-      //     </ReactMarkdown>
-      //   </div>
-      // );
+      htmlContent = (
+        <div className="cell-content source-markdown">
+          <ReactMarkdown
+            remarkPlugins={[RemarkGFM, RemarkMath]}
+            rehypePlugins={[RehypeKatex]}
+          >
+            {newSource}
+          </ReactMarkdown>
+        </div>
+      );
       break;
     default:
       htmlContent = <div>{`Cell Type ${cell_type} not supported...`}</div>;
@@ -103,10 +114,16 @@ function BlockSource(props) {
         <div className="block-hidden" />
       ) : (
         <div className="cell-row">
-          {/* The execution counter */}
-          <pre className="cell-header source">
-            {executionCount ? `[${executionCount}]: ` : null}
-          </pre>
+          {/* Left side of the code editor */}
+          <div className="cell-info">
+            {/* The cell run button */}
+            {runButton}
+            {/* The execution counter */}
+            <pre className="cell-header source">
+              {executionCount ? `[${executionCount}]` : null}
+            </pre>
+          </div>
+          {/* Code itself (or markdown) */}
           {htmlContent}
         </div>
       )}
@@ -237,9 +254,11 @@ function BlockOutput(props) {
 
               return (
                 <div key={index} className="cell-row">
-                  <pre className="cell-header output">
-                    {executionCount ? `[${executionCount}]: ` : null}
-                  </pre>
+                  <div className="cell-info">
+                    <pre className="cell-header output">
+                      {executionCount ? `[${executionCount}]` : null}
+                    </pre>
+                  </div>
                   {htmlContent}
                 </div>
               );
@@ -281,7 +300,7 @@ function JupyterViewer(props) {
               {
                 name: 'stdout',
                 output_type: 'stream',
-                text: ['Warnings\n', 'after\n', ...content],
+                text: [...content],
               },
             ],
           };

@@ -64,7 +64,7 @@ blockquote {
       font-family: Menlo, Consolas, 'DejaVu Sans Mono', monospace;
       font-size: 13px;
       height: 56px;
-      
+
       // background-color: red;
     }
   }
@@ -112,20 +112,45 @@ blockquote {
     display: flex;
     flex-direction: row;
 
-    .cell-header {
-      width: 64px;
+    .cell-info {
+      display: flex;
+      flex-direction: column;
+      align-items: end;
+      width: 54px;
       margin: 0 0 0 0;
-      padding: 5px 0 0 5px;
-      box-sizing: border-box;
+      padding: 5px 10px 5px 0;
 
-      text-align: right;
+      .cell-run-btn {
+        width: 23px;
+        font-size: 1rem;
+        padding: 0px;
+        cursor: pointer;
 
-      &.source {
-        color: #307fc1;
+        background: none;
+        border: none;
+        // border: 1px solid grey;
+        border-radius: 3px;
+
+        &:hover {
+          background: rgb(211, 211, 211);
+        }
+        &:active {
+          background: rgb(180, 180, 180);
+        }
       }
 
-      &.output {
-        color: #bf5b3d;
+      .cell-header {
+        box-sizing: border-box;
+        margin: 0;
+        margin-top: auto;
+
+        &.source {
+          color: #307fc1;
+        }
+
+        &.output {
+          color: #bf5b3d;
+        }
       }
     }
 
