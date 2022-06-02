@@ -64,8 +64,6 @@ blockquote {
       font-family: Menlo, Consolas, 'DejaVu Sans Mono', monospace;
       font-size: 13px;
       height: 56px;
-
-      // background-color: red;
     }
   }
 
@@ -115,7 +113,7 @@ blockquote {
     .cell-info {
       display: flex;
       flex-direction: column;
-      align-items: end;
+      align-items: flex-end;
       width: 54px;
       margin: 0 0 0 0;
       padding: 5px 10px 5px 0;

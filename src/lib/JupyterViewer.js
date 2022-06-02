@@ -16,16 +16,26 @@ function BlockSource(props) {
   // Get component properties
   const { onSubmit } = props;
   // Get cell properties
-  const { cell_type, content } = props.cell;
+  const { cell_type, source, execution_count, metadata } = props.cell;
+  // Get metadata properties
+  const { deletable, editable, name, tags, jupyter, execution } =
+    metadata;
   // Reference the textarea used for the code cell specifically
-  const codeContentRef = useRef(null);
+  const cellSourceRef = useRef(null);
   // Whether to show or hide the cell (0/1)
-  const [cellShown, setCellShown] = useState(1);
+  // const [cellShown, setCellShown] = useState(1);
+  const [cellShown, setCellShown] = useState(
+    jupyter && jupyter.source_hidden ? 0 : 1
+  );
+
   // Content kept within the cell
-  const contentRef = useRef(content ? content : []);
+  const contentRef = useRef(source ? source : []);
 
   // Flag to determine whether to show the markdown content
-  const [showMarkdown, setShowMarkdown] = useState(false);
+  // Automatically shown if the cell is first loaded with content
+  const [showMarkdown, setShowMarkdown] = useState(
+    source.length > 0 && cell_type === 'markdown' ? true : false
+  );
 
   // Generate cell contents
   let htmlContent, // Code editor itself
@@ -45,11 +55,14 @@ function BlockSource(props) {
         const re = /\n?\s*\$\$\s*\n?/g;
         let newSource = contentRef.current.join('').replaceAll(re, '\n$$$\n');
 
-        const reEnableEditing = () => setShowMarkdown(false);
+        const reenableEditing = () => {
+          // console.log(cellSourceRef, contentRef);
+          setShowMarkdown(false);
+        };
         markdownElem = (
           <div
             className="cell-content source-markdown"
-            onDoubleClick={reEnableEditing}
+            onDoubleClick={() => reenableEditing()}
           >
             <ReactMarkdown
               remarkPlugins={[RemarkGFM, RemarkMath]}
@@ -67,7 +80,7 @@ function BlockSource(props) {
   }
 
   const adjustTextArea = () => {
-    const textArea = codeContentRef.current;
+    const textArea = cellSourceRef.current;
     if (textArea) {
       textArea.style.height = 'auto';
       textArea.style.height = textArea.scrollHeight + 'px';
@@ -76,7 +89,7 @@ function BlockSource(props) {
   const updateContent = (e) => {
     // Store the changes to the content
     // Done so that we can restore it if the cell is hidden
-    const textArea = codeContentRef.current;
+    const textArea = cellSourceRef.current;
     if (textArea) {
       contentRef.current = textArea.value.split(/^/m);
     }
@@ -103,10 +116,11 @@ function BlockSource(props) {
       <textarea
         className="source-code-main"
         onKeyDown={keyCallback}
-        ref={codeContentRef}
+        ref={cellSourceRef}
         defaultValue={contentRef.current.join('\n')}
         onChange={updateContent}
         onInput={adjustTextArea}
+        disabled={!editable}
       ></textarea>
     </div>
   );
@@ -150,9 +164,25 @@ function BlockSource(props) {
 
 /* The cell output */
 function BlockOutput(props) {
-  const outputs = props.cell['outputs'];
-  // Whether to show or hide the cell (0/1)
-  const [cellShown, setCellShown] = useState(1);
+  // Get the cell, outputs, and metadata
+  const { cell } = props;
+  const { outputs, metadata } = cell;
+  // Get metadata properties
+  const {
+    collapsed,
+    scrolled,
+    jupyter,
+  } = metadata;
+
+  // Whether to show or hide the cell (0/1/2)
+  const [cellShown, setCellShown] = useState((_) => {
+    if ((jupyter && jupyter.outputs_hidden) || collapsed) {
+      return 0; // Hidden
+    } else if (scrolled) {
+      return 2; // Scroll
+    }
+    return 1; // Show
+  });
 
   return (
     <div className="block-output">
@@ -284,40 +314,54 @@ function BlockOutput(props) {
 function JupyterViewer(props) {
   // -1: auto, 0: hide, 1: show, 2: scroll
   const DISPLAYS = ['hide', 'show', 'scroll'];
+  const { rawIpynb } = props;
   const [clickCellIndex, setCellIndex] = useState(-1);
-  const [cells, setCells] = useState([]);
+  const [cells, setCells] = useState(rawIpynb.cells);
+  // const [cells, setCells] = useState([]);
 
   function addCell(type) {
-    let newCell = [
-      {
-        cell_type: type,
-        execution_count: ' ',
-        content: [],
-        outputs: [],
-      },
-    ];
-    setCells(cells.concat(newCell));
+    let newCell = {};
+
+    switch (type) {
+      default:
+      case 'code':
+        newCell = {
+          cell_type: type,
+          execution_count: ' ',
+          metadata: {},
+          source: [],
+          outputs: [],
+        };
+        break;
+      case 'markdown':
+        newCell = {
+          cell_type: type,
+          metadata: {},
+          source: [],
+        };
+        break;
+    }
+    setCells(cells.concat([newCell]));
+  }
+
+  function runCell(cell, index, content) {
+    // TODO: ADD RUNNING INFORMATION, CELL NUMBERING, AND RESPONSE FROM BACKEND
+    const newCell = {
+      ...cell,
+      outputs: [
+        {
+          name: 'stdout',
+          output_type: 'stream',
+          text: [...content],
+        },
+      ],
+    };
+    setCells(cells.map((c, i) => (i === index ? newCell : c)));
   }
 
   return (
     <div className="jupyter-viewer">
       {cells.map((cell, index) => {
-        const runCell = (content) => {
-          // TODO: ADD RUNNING INFORMATION, CELL NUMBERING, AND RESPONSE FROM BACKEND
-          const newCell = {
-            ...cell,
-            content: content,
-            outputs: [
-              {
-                name: 'stdout',
-                output_type: 'stream',
-                text: [...content],
-              },
-            ],
-          };
-          setCells(cells.map((c, i) => (i === index ? newCell : c)));
-        };
-
         return (
           <div
             key={index}
@@ -331,7 +375,7 @@ function JupyterViewer(props) {
                 cell={cell}
                 highlighted={clickCellIndex === index}
                 display={DISPLAYS.indexOf(props.displaySource)}
-                onSubmit={runCell}
+                onSubmit={(content) => runCell(cell, index, content)}
               />
             )}
             {!('outputs' in cell) ? null : (
