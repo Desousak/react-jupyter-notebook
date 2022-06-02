@@ -33,6 +33,8 @@ function BlockSource(props) {
     source.length > 0 && cell_type === 'markdown' ? true : false
   );
 
+  console.log(props.display);
+
   // Generate cell contents
   let htmlContent, // Code editor itself
     callbackFunc, // The function used when the user tries to run the cell
@@ -223,7 +225,7 @@ function BlockOutput(props) {
                   // Output with execution_count
                   case 'execute_result':
                     executionCount = output['execution_count'];
-
+                    break;
                   // Output without execution_count
                   case 'display_data':
                     let output_data = output['data'];
@@ -365,7 +367,6 @@ function JupyterViewer(props) {
               <BlockSource
                 cell={cell}
                 highlighted={clickCellIndex === index}
-                display={DISPLAYS.indexOf(props.displaySource)}
                 onSubmit={(content) => runCell(cell, index, content)}
               />
             )}
@@ -373,7 +374,6 @@ function JupyterViewer(props) {
               <BlockOutput
                 cell={cell}
                 highlighted={clickCellIndex === index}
-                display={DISPLAYS.indexOf(props.displayOutput)}
                 mediaAlign={
                   { left: 'flex-start', center: 'center', right: 'flex-end' }[
                     props.mediaAlign
@@ -402,8 +402,6 @@ function JupyterViewer(props) {
 JupyterViewer.defaultProps = {
   showLineNumbers: true,
   mediaAlign: 'center',
-  displaySource: 'auto',
-  displayOutput: 'auto',
   codeBlockStyles: undefined,
 };
 
@@ -411,8 +409,6 @@ JupyterViewer.propTypes = {
   rawIpynb: PropTypes.object.isRequired,
   showLineNumbers: PropTypes.bool,
   mediaAlign: PropTypes.oneOf(['left', 'center', 'right']),
-  displaySource: PropTypes.oneOf(['auto', 'hide', 'show']),
-  displayOutput: PropTypes.oneOf(['auto', 'hide', 'show', 'scroll']),
   codeBlockStyles: PropTypes.shape({
     hljsStyle: PropTypes.oneOf(Object.keys(hljsStyles)),
     lineNumberContainerStyle: PropTypes.object,
