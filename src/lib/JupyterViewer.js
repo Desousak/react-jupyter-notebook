@@ -33,8 +33,6 @@ function BlockSource(props) {
     source.length > 0 && cell_type === 'markdown' ? true : false
   );
 
-  console.log(props.display);
-
   // Generate cell contents
   let htmlContent, // Code editor itself
     callbackFunc, // The function used when the user tries to run the cell
@@ -43,7 +41,7 @@ function BlockSource(props) {
 
   switch (cell_type) {
     case 'code':
-      executionCount = props.cell['execution_count'];
+      executionCount = execution_count;
       callbackFunc = onSubmit;
       break;
     case 'markdown':
@@ -118,7 +116,7 @@ function BlockSource(props) {
         defaultValue={contentRef.current.join('\n')}
         onChange={updateContent}
         onInput={adjustTextArea}
-        disabled={!editable}
+        disabled={!(editable === undefined || editable) ? true : false}
       ></textarea>
     </div>
   );
