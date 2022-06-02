@@ -18,19 +18,15 @@ function BlockSource(props) {
   // Get cell properties
   const { cell_type, source, execution_count, metadata } = props.cell;
   // Get metadata properties
-  const { deletable, editable, name, tags, jupyter, execution } =
-    metadata;
+  const { deletable, editable, name, tags, jupyter, execution } = metadata;
   // Reference the textarea used for the code cell specifically
   const cellSourceRef = useRef(null);
   // Whether to show or hide the cell (0/1)
-  // const [cellShown, setCellShown] = useState(1);
   const [cellShown, setCellShown] = useState(
     jupyter && jupyter.source_hidden ? 0 : 1
   );
-
   // Content kept within the cell
   const contentRef = useRef(source ? source : []);
-
   // Flag to determine whether to show the markdown content
   // Automatically shown if the cell is first loaded with content
   const [showMarkdown, setShowMarkdown] = useState(
@@ -168,12 +164,7 @@ function BlockOutput(props) {
   const { cell } = props;
   const { outputs, metadata } = cell;
   // Get metadata properties
-  const {
-    collapsed,
-    scrolled,
-    jupyter,
-  } = metadata;
-
+  const { collapsed, scrolled, jupyter } = metadata;
   // Whether to show or hide the cell (0/1/2)
   const [cellShown, setCellShown] = useState((_) => {
     if ((jupyter && jupyter.outputs_hidden) || collapsed) {
