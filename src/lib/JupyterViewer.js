@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, { func } from 'prop-types';
 import Ansi from 'ansi-to-react';
 import ReactMarkdown from 'react-markdown';
 import RemarkGFM from 'remark-gfm';
@@ -14,9 +14,9 @@ import hljsStyles from './hljsStyles';
 /* The code cells */
 function BlockSource(props) {
   // Get component properties
-  const { onSubmit } = props;
+  const { onSubmit, onDelete, highlighted, cell } = props;
   // Get cell properties
-  const { cell_type, source, execution_count, metadata } = props.cell;
+  const { cell_type, source, execution_count, metadata } = cell;
   // Get metadata properties
   const { deletable, editable, name, tags, jupyter, execution } = metadata;
   // Reference the textarea used for the code cell specifically
@@ -101,7 +101,7 @@ function BlockSource(props) {
   let runButton = showMarkdown ? null : (
     <button
       onClick={() => callbackFunc(contentRef.current)}
-      className="cell-run-btn"
+      className="cell-run-btn cell-btn"
     >
       &#9658;
     </button>
@@ -133,7 +133,7 @@ function BlockSource(props) {
     <div className="block-source">
       {/* The blue highlight for the cell */}
       <div
-        className={props.highlighted ? 'block-light-selected' : 'block-light'}
+        className={highlighted ? 'block-light-selected' : 'block-light'}
         onClick={() => setCellShown((cellShown + 1) % 2)}
       />
 
@@ -152,6 +152,18 @@ function BlockSource(props) {
           </div>
           {/* Code itself (or markdown) */}
           {showMarkdown ? markdownElem : htmlContent}
+        </div>
+      )}
+      {/* Cell options menu  (only shown if highlighted)*/}
+      {highlighted && (
+        <div className="cell-options">
+          {/* The delete cell button */}
+          <button
+            onClick={() => onDelete()}
+            className="cell-delete-btn cell-btn"
+          >
+            🗑
+          </button>
         </div>
       )}
     </div>
@@ -302,15 +314,35 @@ function BlockOutput(props) {
   );
 }
 
-function JupyterViewer(props) {
-  // -1: auto, 0: hide, 1: show, 2: scroll
-  const DISPLAYS = ['hide', 'show', 'scroll'];
-  const { rawIpynb } = props;
-  const [clickCellIndex, setCellIndex] = useState(-1);
-  const [cells, setCells] = useState(rawIpynb.cells);
-  // const [cells, setCells] = useState([]);
+class JupyterViewer extends React.Component {
+  constructor(props) {
+    super(props);
+    const { rawIpynb } = props;
+    const processedIpynb = rawIpynb.cells.map((cell) =>
+      this.genCellName(cell)
+    );
 
-  function addCell(type) {
+    this.state = {
+      clickCellIndex: -1,
+      cells: processedIpynb,
+    };
+  }
+
+  genCellName(cell) {
+    // Checks if a cell has a name and if not, generates a name
+    if (cell && cell.metadata) {
+      const cellName = cell.metadata.name;
+      if (cellName === undefined || cellName.length > 0) {
+        // Generate new name
+        const randomName = Math.random(100).toString(36).slice(2);
+        cell.metadata.name = randomName;
+      }
+      return cell;
+    }
+    return undefined;
+  }
+
+  addCell(type) {
     let newCell = {};
 
     switch (type) {
@@ -332,10 +364,13 @@ function JupyterViewer(props) {
         };
         break;
     }
-    setCells(cells.concat([newCell]));
+
+    // Add a cell name
+    newCell = this.genCellName(newCell);
+    this.setState({ cells: this.state.cells.concat([newCell]) });
   }
 
-  function runCell(cell, index, content) {
+  runCell(cell, index, content) {
     // TODO: ADD RUNNING INFORMATION, CELL NUMBERING, AND RESPONSE FROM BACKEND
     const newCell = {
       ...cell,
@@ -347,54 +382,68 @@ function JupyterViewer(props) {
         },
       ],
     };
-    setCells(cells.map((c, i) => (i === index ? newCell : c)));
+    this.setState({
+      cells: this.state.cells.map((c, i) => (i === index ? newCell : c)),
+    });
   }
 
-  return (
-    <div className="jupyter-viewer">
-      {cells.map((cell, index) => {
-        return (
-          <div
-            key={index}
-            className="block"
-            onMouseDown={() => {
-              setCellIndex(index);
-            }}
+  deleteCell(index) {
+    const { cells } = this.state;
+    const newCells = cells.filter((c, i) => i !== index);
+    this.setState({ cells: newCells });
+  }
+
+  render() {
+    return (
+      <div className="jupyter-viewer">
+        {this.state.cells.map((cell, index) => {
+          return (
+            <div
+              key={cell.metadata.name}
+              className="block"
+              onMouseDown={() => {
+                this.setState({ clickCellIndex: index });
+              }}
+            >
+              {!('cell_type' in cell) ? null : (
+                <BlockSource
+                  cell={cell}
+                  highlighted={this.state.clickCellIndex === index}
+                  onSubmit={(content) => this.runCell(cell, index, content)}
+                  onDelete={() => this.deleteCell(index)}
+                />
+              )}
+              {!('outputs' in cell) ? null : (
+                <BlockOutput
+                  cell={cell}
+                  highlighted={this.state.clickCellIndex === index}
+                  mediaAlign={
+                    { left: 'flex-start', center: 'center', right: 'flex-end' }[
+                      this.props.mediaAlign
+                    ]
+                  }
+                />
+              )}
+            </div>
+          );
+        })}
+        <div className="add-buttons">
+          <button
+            className="add-code-btn"
+            onClick={(_) => this.addCell('code')}
           >
-            {!('cell_type' in cell) ? null : (
-              <BlockSource
-                cell={cell}
-                highlighted={clickCellIndex === index}
-                onSubmit={(content) => runCell(cell, index, content)}
-              />
-            )}
-            {!('outputs' in cell) ? null : (
-              <BlockOutput
-                cell={cell}
-                highlighted={clickCellIndex === index}
-                mediaAlign={
-                  { left: 'flex-start', center: 'center', right: 'flex-end' }[
-                    props.mediaAlign
-                  ]
-                }
-              />
-            )}
-          </div>
-        );
-      })}
-      <div className="add-buttons">
-        <button className="add-code-btn" onClick={(_) => addCell('code')}>
-          + Code
-        </button>
-        <button
-          className="add-markdown-btn"
-          onClick={(_) => addCell('markdown')}
-        >
-          + Markdown
-        </button>
+            + Code
+          </button>
+          <button
+            className="add-markdown-btn"
+            onClick={(_) => this.addCell('markdown')}
+          >
+            + Markdown
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 }
 
 JupyterViewer.defaultProps = {
