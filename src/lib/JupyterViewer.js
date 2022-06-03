@@ -14,7 +14,7 @@ import hljsStyles from './hljsStyles';
 /* The code cells */
 function BlockSource(props) {
   // Get component properties
-  const { onSubmit, onDelete, highlighted, cell } = props;
+  const { onSubmit, onDelete, onMove, highlighted, cell } = props;
   // Get cell properties
   const { cell_type, source, execution_count, metadata } = cell;
   // Get metadata properties
@@ -157,10 +157,17 @@ function BlockSource(props) {
       {/* Cell options menu  (only shown if highlighted)*/}
       {highlighted && (
         <div className="cell-options">
+          {/* The cell move button(s) */}
+          <button className="cell-up-btn cell-btn" onClick={() => onMove(-1)}>
+            ^
+          </button>
+          <button className="cell-down-btn cell-btn" onClick={() => onMove(1)}>
+            v
+          </button>
           {/* The delete cell button */}
           <button
-            onClick={() => onDelete()}
             className="cell-delete-btn cell-btn"
+            onClick={() => onDelete()}
           >
             🗑
           </button>
@@ -318,9 +325,7 @@ class JupyterViewer extends React.Component {
   constructor(props) {
     super(props);
     const { rawIpynb } = props;
-    const processedIpynb = rawIpynb.cells.map((cell) =>
-      this.genCellName(cell)
-    );
+    const processedIpynb = rawIpynb.cells.map((cell) => this.genCellName(cell));
 
     this.state = {
       clickCellIndex: -1,
@@ -342,7 +347,7 @@ class JupyterViewer extends React.Component {
     return undefined;
   }
 
-  addCell(type) {
+  addCell(type, index = this.state.cells.length) {
     let newCell = {};
 
     switch (type) {
@@ -367,7 +372,11 @@ class JupyterViewer extends React.Component {
 
     // Add a cell name
     newCell = this.genCellName(newCell);
-    this.setState({ cells: this.state.cells.concat([newCell]) });
+
+    // Insert cell into cell array
+    let newCells = [...this.state.cells];
+    newCells.splice(index, 0, newCell);
+    this.setState({ cells: newCells });
   }
 
   runCell(cell, index, content) {
@@ -393,6 +402,20 @@ class JupyterViewer extends React.Component {
     this.setState({ cells: newCells });
   }
 
+  moveCell(index, direction) {
+    // Swaps two cells and highlights the moved cell
+    const newIndex = index + direction;
+
+    if (newIndex > 0 && newIndex < this.state.cells.length) {
+      let newCells = [...this.state.cells];
+      let tmpCell = newCells[index];
+
+      newCells[index] = newCells[newIndex];
+      newCells[newIndex] = tmpCell;
+      this.setState({ cells: newCells, clickCellIndex: newIndex });
+    }
+  }
+
   render() {
     return (
       <div className="jupyter-viewer">
@@ -411,6 +434,7 @@ class JupyterViewer extends React.Component {
                   highlighted={this.state.clickCellIndex === index}
                   onSubmit={(content) => this.runCell(cell, index, content)}
                   onDelete={() => this.deleteCell(index)}
+                  onMove={(dir) => this.moveCell(index, dir)}
                 />
               )}
               {!('outputs' in cell) ? null : (
