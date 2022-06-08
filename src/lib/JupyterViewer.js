@@ -1,14 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import PropTypes, { func } from 'prop-types';
+import PropTypes from 'prop-types';
 import Ansi from 'ansi-to-react';
 import ReactMarkdown from 'react-markdown';
 import RemarkGFM from 'remark-gfm';
 import RemarkMath from 'remark-math';
 import RehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
 import SyntaxHighlighter from 'react-syntax-highlighter';
+import { BiTrash } from 'react-icons/bi';
 
 import './JupyterViewer.scss';
+import 'katex/dist/katex.min.css';
 import hljsStyles from './hljsStyles';
 
 /* The code cells */
@@ -18,7 +19,7 @@ function BlockSource(props) {
   // Get cell properties
   const { cell_type, source, execution_count, metadata } = cell;
   // Get metadata properties
-  const { deletable, editable, name, tags, jupyter, execution } = metadata;
+  const { deletable, editable, jupyter } = metadata;
   // Reference the textarea used for the code cell specifically
   const cellSourceRef = useRef(null);
   // Whether to show or hide the cell (0/1)
@@ -124,10 +125,8 @@ function BlockSource(props) {
   // Auto adjust the text area size on load
   // Helps when using the markdown editor
   useEffect(() => {
-    if (!showMarkdown) {
-      adjustTextArea();
-    }
-  }, [showMarkdown]);
+    if (!showMarkdown) adjustTextArea();
+  }, [showMarkdown, cellShown]);
 
   return (
     <div className="block-source">
@@ -154,22 +153,23 @@ function BlockSource(props) {
           {showMarkdown ? markdownElem : htmlContent}
         </div>
       )}
-      {/* Cell options menu  (only shown if highlighted)*/}
+      {/* Cell options menu (only shown if highlighted)*/}
       {highlighted && (
         <div className="cell-options">
           {/* The cell move button(s) */}
           <button className="cell-up-btn cell-btn" onClick={() => onMove(-1)}>
-            ^
+            ↑
           </button>
           <button className="cell-down-btn cell-btn" onClick={() => onMove(1)}>
-            v
+            ↓
           </button>
           {/* The delete cell button */}
           <button
             className="cell-delete-btn cell-btn"
-            onClick={() => onDelete()}
+            onClick={() => (deletable === false ? onDelete() : null)}
+            disabled={deletable !== true && deletable !== undefined}
           >
-            🗑
+            <BiTrash />
           </button>
         </div>
       )}
@@ -184,7 +184,7 @@ function BlockOutput(props) {
   const { outputs, metadata } = cell;
   // Get metadata properties
   const { collapsed, scrolled, jupyter } = metadata;
-  // Whether to show or hide the cell (0/1/2)
+  // Whether to show, show with a fixed size, or hide the cell (0/1/2)
   const [cellShown, setCellShown] = useState((_) => {
     if ((jupyter && jupyter.outputs_hidden) || collapsed) {
       return 0; // Hidden
@@ -324,9 +324,11 @@ function BlockOutput(props) {
 class JupyterViewer extends React.Component {
   constructor(props) {
     super(props);
-    const { rawIpynb } = props;
+    const { rawIpynb, kernelUrl } = props;
     const processedIpynb = rawIpynb.cells.map((cell) => this.genCellName(cell));
+    // const processedIpynb = [];
 
+    this.kernelUrl = kernelUrl;
     this.state = {
       clickCellIndex: -1,
       cells: processedIpynb,
@@ -391,6 +393,18 @@ class JupyterViewer extends React.Component {
         },
       ],
     };
+
+    console.log('sending request to', this.kernelUrl + '/run');
+    let response = fetch(this.kernelUrl + '/run', {
+      method: 'POST',
+      body: JSON.stringify(content),
+      mode: 'no-cors',
+    })
+      // .then((response) => response.json())
+      .then((data) => {
+        console.log('Success:', data);
+      });
+
     this.setState({
       cells: this.state.cells.map((c, i) => (i === index ? newCell : c)),
     });
@@ -406,7 +420,7 @@ class JupyterViewer extends React.Component {
     // Swaps two cells and highlights the moved cell
     const newIndex = index + direction;
 
-    if (newIndex > 0 && newIndex < this.state.cells.length) {
+    if (newIndex >= 0 && newIndex < this.state.cells.length) {
       let newCells = [...this.state.cells];
       let tmpCell = newCells[index];
 
@@ -474,10 +488,12 @@ JupyterViewer.defaultProps = {
   showLineNumbers: true,
   mediaAlign: 'center',
   codeBlockStyles: undefined,
+  rawIpynb: { cells: [] },
 };
 
 JupyterViewer.propTypes = {
-  rawIpynb: PropTypes.object.isRequired,
+  kernelUrl: PropTypes.string.isRequired,
+  rawIpynb: PropTypes.object,
   showLineNumbers: PropTypes.bool,
   mediaAlign: PropTypes.oneOf(['left', 'center', 'right']),
   codeBlockStyles: PropTypes.shape({

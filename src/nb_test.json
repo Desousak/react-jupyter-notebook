@@ -1,7 +1,9 @@
 {
   "cells": [{
       "cell_type": "markdown",
-      "metadata": {},
+      "metadata": {
+        "deletable": false
+      },
       "source": [
         "https://www.semanticscholar.org/paper/Fast-Effective-Rule-Induction-Cohen/6665e03447f989c9bdb3432d93e89b516b9d18a7\n",
         "#### IREP\n",
