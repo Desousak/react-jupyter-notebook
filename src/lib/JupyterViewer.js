@@ -21,7 +21,8 @@ class JupyterViewer extends React.Component {
     // Update if a new ipynb is loaded
     if (prevProps.rawIpynb !== this.props.rawIpynb) {
       const newCells = this.loadCells(this.props.rawIpynb);
-      this.setState({ newCells });
+      console.log(newCells);
+      this.setState({ cells: newCells });
     }
   }
 
@@ -31,7 +32,7 @@ class JupyterViewer extends React.Component {
         // If name is invalid - regen
         const cellName = cell.metadata.name;
         if (cellName === undefined || cellName.length > 0) {
-          cell.metadata.name = Math.random(100).toString(36).slice(2);
+          cell.metadata.name = this.genCellName();
         }
       }
       return cell;
@@ -53,6 +54,10 @@ class JupyterViewer extends React.Component {
   }
 
   // Cell functions
+  genCellName() {
+    return Math.random(100).toString(36).slice(2);
+  }
+
   getCellIndex(name) {
     return this.state.cells.findIndex((c) => c.metadata.name === name);
   }
@@ -84,7 +89,7 @@ class JupyterViewer extends React.Component {
           break;
       }
       // Add a cell name
-      newCell = this.genCellName(newCell);
+      newCell.metadata.name = this.genCellName();
 
       // Insert cell into cell array
       let newCells = [...this.state.cells];
@@ -104,6 +109,7 @@ class JupyterViewer extends React.Component {
   moveCell(index = -1, direction) {
     // Swaps two cells and highlights the moved cell
     const newIndex = index !== -1 ? index + direction : -1;
+
     if (newIndex >= 0 && newIndex < this.state.cells.length) {
       let newCells = [...this.state.cells];
       let tmpCell = newCells[index];
