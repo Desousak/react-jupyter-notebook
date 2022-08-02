@@ -115,7 +115,8 @@ function App(props) {
       {!state.rawIpynb ? null :
         <JupyterViewer
           rawIpynb={state.rawIpynb}
-          kernelUrl={"localhost:5000"}
+          kernelUrl={`localhost:3000/ws/socket.io`}
+          
           mediaAlign={state.mediaAlign}
           showLineNumbers={state.showLineNumbers}
           displaySource={state.displaySource}
