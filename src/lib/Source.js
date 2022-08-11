@@ -28,6 +28,7 @@ export default class Source extends React.Component {
 
     this.runCallback = () => console.error('Incorrect cell type!');
     this.updateOutputs = props.updateOutputs;
+    this.updateCellLang = null;
   }
 
   componentDidUpdate() {
@@ -88,6 +89,17 @@ export default class Source extends React.Component {
     this.source = code.split(/^/m);
   }
 
+  toggleLang() {
+    // First toggle the cell type
+    this.setState(
+      (state) => {
+        return { cellType: state.cellType === 'code' ? 'markdown' : 'code' };
+      },
+      // Then clear outputs
+      () => this.updateOutputs(null, true)
+    );
+  }
+
   keyCallback(e) {
     // If shift-enter - call the callback
     if (e.shiftKey && e.which === 13) {
@@ -127,6 +139,14 @@ export default class Source extends React.Component {
             }
             highlightType={highlightType}
           />
+          <div className="cell-lang">
+            <button
+              className="block-btn cell-type-btn"
+              onClick={(_) => this.toggleLang()}
+            >
+              {this.state.cellType}
+            </button>
+          </div>
         </div>
       );
       runButton = (

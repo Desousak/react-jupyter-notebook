@@ -59,10 +59,6 @@ blockquote {
     background-color: #f5f5f5 !important;
     border: 1px solid #e0e0e0;
     color: black;
-
-    .block-btn {
-      font-family: inherit;
-    }
   }
 
   & > * {
@@ -74,6 +70,7 @@ blockquote {
     align-items: center;
     padding: 2px 6px 3px 6px;
 
+    font-family: inherit;
     font-size: 1.125rem;
     background: none;
     border: none;
@@ -110,12 +107,16 @@ blockquote {
     flex-direction: row;
     position: relative;
 
+    .source-code-main,
+    .cell-lang {
+      background: #f5f5f5 !important;
+      border: solid #e0e0e0 !important;
+    }
     .source-code-main {
       margin: 0 0 0 0;
       padding: 0.75rem 2rem;
       box-sizing: border-box !important;
-      background: #f5f5f5 !important;
-      border: solid 1px #e0e0e0 !important;
+      border-width: 1px 1px 0 !important;
       flex: 1;
 
       counter-reset: line;
@@ -137,6 +138,19 @@ blockquote {
         text-align: right;
         width: 40px;
         font-weight: 100;
+      }
+    }
+    .cell-lang {
+      outline: none;
+      padding: 0 .5rem 0 0;
+      text-align: end;
+      border-width: 0 1px 1px !important;
+
+      .cell-type-btn {
+        border: none;
+        padding: none;
+        display: inline !important;
+        font-size: inherit;
       }
     }
   }
@@ -217,7 +231,7 @@ blockquote {
 
       &.source-code {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
 
         .source-code-main {
           flex: 1;
