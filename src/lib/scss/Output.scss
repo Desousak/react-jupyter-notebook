@@ -1,0 +1,24 @@
+.block .block-output {
+  width: 100%;
+  margin: 5px 0 0 0;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: row;
+
+  .block-output-content {
+    width: 100%;
+    overflow-y: auto;
+
+    div > .cell-row > * {
+      padding: 5px;
+    }
+  }
+}
+
+// Add a vertical bar in front of the markdown blockquotes (lines starting with >).
+blockquote {
+  border-left: 0.5em #eee solid;
+  padding-left: 1em;
+  margin: 0;
+}

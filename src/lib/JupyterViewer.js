@@ -1,31 +1,39 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import './JupyterViewer.scss';
+import './scss/JupyterViewer.scss';
 
 import Block from './Block';
-import KernelMessaging from './KernelMessaging';
 
+// TODO: CREATE A STATUS BAR THAT ALLOWS FOR KERNEL STATUS, SWITCHING, AND SIGNALLING
 class JupyterViewer extends React.Component {
   constructor(props) {
     super(props);
-    const { rawIpynb, kernelUrl } = props;
+    const { rawIpynb, MessengerObj } = props;
     const processedIpynb = this.loadCells(rawIpynb);
     this.state = {
       clickCellIndex: -1,
       cells: processedIpynb,
     };
-    this.prepKernel(kernelUrl);
+    // TODO: LOOK TOWARDS A BETTER WAY OF SHARING THE MESSENGER OTHER THAN PROP-DRILLING
+    this.kernelMessenger = new MessengerObj();
+
+    // Prep callbacks to prevent re-renders
+    this.moveCellCallback = (d) => this.moveCell(this.state.clickCellIndex, d);
+    this.deleteCellCallback = (d) =>
+      this.deleteCell(this.state.clickCellIndex, d);
+    this.insertCellCallback = (d) =>
+      this.addCell(this.state.clickCellIndex + d, 'code');
   }
 
   componentDidUpdate(prevProps, prevState) {
     // Update if a new ipynb is loaded
     if (prevProps.rawIpynb !== this.props.rawIpynb) {
       const newCells = this.loadCells(this.props.rawIpynb);
-      console.log(newCells);
       this.setState({ cells: newCells });
     }
   }
 
+  // Cell functions
   loadCells(ipynb) {
     return ipynb.cells.map((cell) => {
       if (cell && cell.metadata) {
@@ -39,27 +47,8 @@ class JupyterViewer extends React.Component {
     });
   }
 
-  // Init kernel backend
-  prepKernel(kernelUrl) {
-    // Getting the first instance will initialize
-    KernelMessaging.getInstance(kernelUrl);
-  }
-
-  offsetHighlight(d) {
-    const clickCellIndex = this.state.clickCellIndex + d;
-    if (clickCellIndex >= 0 && clickCellIndex < this.state.cells.length)
-      this.setState({
-        clickCellIndex,
-      });
-  }
-
-  // Cell functions
   genCellName() {
     return Math.random(100).toString(36).slice(2);
-  }
-
-  getCellIndex(name) {
-    return this.state.cells.findIndex((c) => c.metadata.name === name);
   }
 
   addCell(index = this.state.cells.length, type = 'code') {
@@ -137,19 +126,11 @@ class JupyterViewer extends React.Component {
               {!('cell_type' in cell) ? null : (
                 <Block
                   cell={cell}
+                  moveCell={this.moveCellCallback}
+                  deleteCell={this.deleteCellCallback}
+                  insertCell={this.insertCellCallback}
+                  kernelMessenger={this.kernelMessenger}
                   highlighted={this.state.clickCellIndex === index}
-                  moveCell={(d) =>
-                    this.moveCell(this.getCellIndex(cell.metadata.name), d)
-                  }
-                  deleteCell={() =>
-                    this.deleteCell(this.getCellIndex(cell.metadata.name))
-                  }
-                  insertCell={(d) =>
-                    this.addCell(
-                      this.getCellIndex(cell.metadata.name) + d,
-                      'code'
-                    )
-                  }
                 />
               )}
             </div>
@@ -174,24 +155,42 @@ class JupyterViewer extends React.Component {
   }
 }
 
+class DefaultKernelMessenger {
+  // eslint-disable-next-line no-useless-constructor
+  constructor() {
+    // Init connection here
+    // Constructor is not passed any parameters, set them here instead
+  }
+
+  // %%%%%%%%%%%%%%%%%%%%%%
+  // Code-Cell Interactions
+  // Functions here MUST be implemented
+  // %%%%%%%%%%%%%%%%%%%%%%
+  runCode(code, callbackFunc) {
+    // Run the code
+    // Returns true if successful and adds the cell to the execution queue (via callbackFunc), false otherwise
+    return false;
+  }
+
+  signalKernel(signal) {
+    // Returns true if successful, false otherwise
+    return false;
+  }
+
+  connected() {
+    // Returns true if connected, false otherwise
+    return false;
+  }
+}
+
 JupyterViewer.defaultProps = {
-  showLineNumbers: true,
-  mediaAlign: 'center',
-  codeBlockStyles: undefined,
   rawIpynb: { cells: [] },
+  MessengerObj: DefaultKernelMessenger,
 };
 
 JupyterViewer.propTypes = {
-  kernelUrl: PropTypes.string.isRequired,
   rawIpynb: PropTypes.object,
-  showLineNumbers: PropTypes.bool,
-  mediaAlign: PropTypes.oneOf(['left', 'center', 'right']),
-  // codeBlockStyles: PropTypes.shape({
-  //   hljsStyle: PropTypes.oneOf(Object.keys(hljsStyles)),
-  //   lineNumberContainerStyle: PropTypes.object,
-  //   lineNumberStyle: PropTypes.object,
-  //   codeContainerStyle: PropTypes.object,
-  // }),
+  MessengerObj: PropTypes.func,
 };
 
-export default JupyterViewer;
+export { JupyterViewer, DefaultKernelMessenger };

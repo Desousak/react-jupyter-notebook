@@ -1,0 +1,114 @@
+.jupyter-viewer {
+  width: 100%;
+  height: 100%;
+  padding: 1rem 0 0 0;
+
+  .add-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    gap: 1rem;
+    margin: 1rem;
+
+    button {
+      border: 1px solid grey;
+      background: rgb(255, 255, 255);
+      color: black;
+      cursor: pointer;
+      font-size: 1rem;
+      font-family: monospace;
+      user-select: none;
+
+      &:hover {
+        background: rgb(211, 211, 211);
+      }
+      &:active {
+        background: rgb(180, 180, 180);
+      }
+    }
+  }
+}
+
+.block .cell-row {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+
+  .cell-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    min-width: 54px;
+    margin: 0 0 0 0;
+    padding: 0 10px 0 0;
+
+    .cell-run-btn {
+      flex-grow: 1;
+      & button {
+        position: sticky !important;
+        top: 0;
+      }
+    }
+
+    .cell-run-count {
+      box-sizing: border-box;
+      margin: 0;
+
+      &.source {
+        color: #307fc1;
+      }
+
+      &.output {
+        color: #bf5b3d;
+      }
+    }
+  }
+
+  .cell-content {
+    width: 100%;
+    margin: 0 0 0 0;
+    box-sizing: border-box;
+    flex: 1;
+
+    &.source-code {
+      display: flex;
+      flex-direction: column;
+
+      .source-code-main {
+        flex: 1;
+        display: block;
+        resize: none;
+        overflow-y: hidden;
+      }
+    }
+
+    &.source-markdown {
+      padding: 0 20px 0 5px;
+      box-sizing: border-box;
+
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica,
+        Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol';
+      font-size: 14px;
+    }
+
+    &.output-std {
+      // padding: 5px 0 5px 5px;
+      box-sizing: border-box;
+    }
+
+    &.output-err {
+      // padding: 5px 0 0 5px;
+      box-sizing: border-box;
+      background-color: #ffdddd;
+    }
+
+    &.output-display {
+      display: flex;
+      flex-direction: row;
+    }
+  }
+}

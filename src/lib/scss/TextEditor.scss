@@ -1,0 +1,20 @@
+.block-source .source-code-main {
+  .editor-textarea {
+    outline: none;
+    padding-left: 60px !important;
+    padding-bottom: 0px !important;
+  }
+
+  pre {
+    padding-left: 60px !important;
+  }
+
+  .editor-linenum {
+    position: absolute;
+    left: 0px;
+    color: #cccccc;
+    text-align: right;
+    width: 40px;
+    font-weight: 100;
+  }
+}

@@ -1,0 +1,51 @@
+.block {
+  position: relative;
+  padding: 5px 5px 5px 5px;
+  box-sizing: border-box;
+  // overflow: hidden;
+
+  font-family: monospace;
+  font-size: 13px;
+  min-height: 56px;
+
+  & > * {
+    font-family: monospace;
+  }
+
+  .block-btn {
+    display: flex;
+    align-items: center;
+    padding: 2px 6px 3px 6px;
+
+    font-family: inherit;
+    font-size: 1.125rem;
+    background: none;
+    border: none;
+    border-radius: 3px;
+
+    color: inherit;
+
+    &:not([disabled]) {
+      cursor: pointer;
+      &:hover {
+        background: rgb(211, 211, 211);
+      }
+      &:active {
+        background: rgb(180, 180, 180);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.25;
+    }
+  }
+
+  .output-hidden,
+  .source-hidden {
+    width: 100%;
+    min-height: 35px;
+    // TODO: Revise styles so that positions are not hardcoded
+    margin-left: 64px;
+    font-weight: 100;
+  }
+}

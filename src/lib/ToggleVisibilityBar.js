@@ -1,6 +1,7 @@
 import React from 'react';
+import './scss/ToggleVisibilityBar.scss';
 
-export default function ToggleVisibilityBar(props) {
+export default React.memo(function ToggleVisibilityBar(props) {
   const { highlighted, onClick } = props;
 
   //  The blue highlight for the cell
@@ -10,4 +11,4 @@ export default function ToggleVisibilityBar(props) {
       onClick={onClick}
     />
   );
-}
+});

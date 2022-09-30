@@ -1,10 +1,14 @@
 import React from 'react';
 import Editor from 'react-simple-code-editor';
+
+import './scss/TextEditor.scss';
+
+// Syntax Highlighting
 import { highlight } from 'prismjs/components/prism-core';
 import 'prismjs/components/prism-python';
-import 'prismjs/themes/prism.css'; //Example style, you can use another
+import 'prismjs/themes/prism.min.css'; //Example style, you can use another
 
-class TextEditor extends React.Component {
+class TextEditor extends React.PureComponent {
   constructor(props) {
     super(props);
     const { defaultValue } = props;
@@ -34,8 +38,7 @@ class TextEditor extends React.Component {
           highlight(code, highlightType)
             .split('\n')
             .map(
-              (line, i) =>
-                `<span class='editor-linenum'>${i + 1}</span>${line}`
+              (line, i) => `<span class='editor-linenum'>${i + 1}</span>${line}`
             )
             .join('\n')
         }

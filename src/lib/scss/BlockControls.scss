@@ -1,0 +1,14 @@
+.block .block-controls {
+  display: flex;
+  position: absolute;
+  top: -14px;
+  left: 100px;
+  gap: 10px;
+  font-size: 1rem;
+  padding: 0.1rem;
+  // padding: 0.25rem 0.5rem;
+
+  background-color: #f5f5f5 !important;
+  border: 1px solid #e0e0e0;
+  color: black;
+}

@@ -1,34 +1,37 @@
 import React from 'react';
+import Timer from './Timer';
+import './scss/Source.scss';
 
 /* Code-cell Styling */
 import TextEditor from './TextEditor';
 import { languages } from 'prismjs/components/prism-core';
 
 /* Markdown Styling */
-import ReactMarkdown from 'react-markdown';
+import 'katex/dist/katex.min.css';
 import RemarkGFM from 'remark-gfm';
 import RemarkMath from 'remark-math';
 import RehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
-import KernelMessaging from './KernelMessaging';
+import ReactMarkdown from 'react-markdown';
 
-export default class Source extends React.Component {
+export default class Source extends React.PureComponent {
   constructor(props) {
     super(props);
     this.state = {
+      codeStatus: -1,
+      shown: props.shown,
       cellType: props.cellType,
       showMarkdown: props.showMarkdown,
-      executionCount: props.executionCount,
-      kernelBusy: false,
-      shown: props.shown,
     };
-    this.source = props.source ? props.source : [];
     this.editable = props.editable;
-    this.kernelMessager = KernelMessaging.getInstance();
+    this.executionCount = props.executionCount;
+    this.kernelMessenger = props.kernelMessenger;
+    this.source = props.source ? props.source : [];
 
-    this.runCallback = () => console.error('Incorrect cell type!');
+    // Callbacks
     this.updateOutputs = props.updateOutputs;
-    this.updateCellLang = null;
+    this.onKeyCallback = this.keyCallback.bind(this);
+    this.onChangeCallback = this.updateContent.bind(this);
+    this.runCallback = () => console.error('Incorrect cell type!');
   }
 
   componentDidUpdate() {
@@ -38,41 +41,94 @@ export default class Source extends React.Component {
     }
   }
 
+  // %%%%%%%%%%%%
+  // Code Execution
+  // %%%%%%%%%%%%
   run(code) {
-    let parseResponse = (msg) => {
+    if (this.kernelMessenger.connected()) {
+      if (this.state.codeStatus <= 0) {
+        const runStatus = this.kernelMessenger.runCode(
+          code,
+          this.parseResponse.bind(this)
+        );
+        if (runStatus) {
+          // Reset source but keep output for now - will be reset later
+          this.resetSource(false, null, { codeStatus: 1 });
+        }
+      } else {
+        // Stop execution
+        if (this.kernelMessenger.signalKernel(2))
+          this.setState({ codeStatus: -2 });
+      }
+    } else {
+      // TODO: Implement better error message when not connected to a kernel!
+      alert('Kernel not connected!');
+    }
+  }
+
+  parseResponse(msg) {
+    // Check is used to prevent running code & change of cell type race condition
+    if (this.state.cellType !== 'markdown') {
+      // Messages expected (in order of occurrence)
       const msgContent = msg.content;
       switch (msg.msg_type) {
         case 'status':
-          // Kernel status (usually busy or idle)
+          // Kernel status (usually busy or idle, first and last messages)
           let kernelBusy = msgContent.execution_state === 'busy';
-          this.setState({ kernelBusy });
+          if (this.state.codeStatus !== -2) {
+            if (kernelBusy) {
+              // Clear the output only when we get response from the kernel
+              this.resetSource(true, false, { codeStatus: 2 });
+            } else if (this.executionCount === null) {
+              // Execution suddenly ended...
+              this.setState({ codeStatus: -2 });
+            } else {
+              // End of output
+              this.setState({ codeStatus: 0 });
+            }
+          }
           break;
         case 'execute_input':
-          // Post-run execution count
-          let executionCount = msgContent.execution_count;
-          this.setState({ executionCount });
+          // Post-run execution count (usually second message)
+          this.executionCount = msgContent.execution_count;
           break;
         case 'error':
+          // Run same code as 'stream' but log error
+          this.setState({ codeStatus: -2 }, (_) =>
+            this.updateOutputs({ ...msgContent, output_type: msg.msg_type })
+          );
+          break;
         case 'stream':
         case 'display_data':
         case 'execute_result':
-          // Execution Results - add to outputs array
-          let content = { ...msgContent, output_type: msg.msg_type };
-          this.updateOutputs(content);
+          // Execution Results - add to outputs array (third to second last message)
+          this.updateOutputs({ ...msgContent, output_type: msg.msg_type });
           break;
+        case 'shutdown_reply':
         default:
+          this.resetSource(true, false, { codeStatus: -2 });
           break;
       }
-    };
-
-    this.updateOutputs(null, true);
-    this.kernelMessager.runCode(code, parseResponse);
-    this.setState({ executionCount: ' ' });
+    }
   }
 
-  getCellData() {
+  // %%%%%%%%%%%%%%%%%%%%%%%%
+  // Source & Cell Management
+  // %%%%%%%%%%%%%%%%%%%%%%%%
+  resetSource(
+    clearOutput = true,
+    setExecCount = null,
+    resetVals = { codeStatus: 0 },
+    callback
+  ) {
+    if (clearOutput) this.updateOutputs(null, true);
+    if (setExecCount !== false) this.executionCount = setExecCount;
+    if (resetVals) this.setState(resetVals, callback);
+  }
+
+  getSourceData() {
     return {
-      execution_count: this.state.executionCount,
+      execution_count: this.executionCount,
       metadata: {
         editable: this.editable,
         jupyter: {
@@ -83,21 +139,27 @@ export default class Source extends React.Component {
     };
   }
 
-  updateCellContent(code) {
+  toggleLang() {
+    // Stop any on-going execution
+    let signalStatus = true;
+    if (this.state.codeStatus > 0)
+      signalStatus = this.kernelMessenger.signalKernel(2);
+    if (signalStatus)
+      this.resetSource(true, null, (state) => {
+        return {
+          cellType: state.cellType === 'code' ? 'markdown' : 'code',
+          codeStatus: -1,
+        };
+      });
+  }
+
+  // %%%%%%%%%%%%%%
+  // Text Callbacks
+  // %%%%%%%%%%%%%%
+  updateContent(code) {
     // Store the changes to the content
     // Done so that we can restore it if the cell is hidden
     this.source = code.split(/^/m);
-  }
-
-  toggleLang() {
-    // First toggle the cell type
-    this.setState(
-      (state) => {
-        return { cellType: state.cellType === 'code' ? 'markdown' : 'code' };
-      },
-      // Then clear outputs
-      () => this.updateOutputs(null, true)
-    );
   }
 
   keyCallback(e) {
@@ -105,16 +167,44 @@ export default class Source extends React.Component {
     if (e.shiftKey && e.which === 13) {
       this.runCallback(this.source);
       e.preventDefault();
+      e.stopPropagation();
     }
   }
 
+  preProcessMarkdown(text) {
+    const fixMath = (text) => {
+      // '$$' has to be in a separate new line to be rendered as a block math equation.
+      const re = /\n?\s*\$\$\s*\n?/g;
+      return text.replaceAll(re, '\n$$$\n');
+    };
+    const trimWhitespace = (text) => {
+      // Whitespace on the beginning of lines must be removed for HTML
+      let res = '',
+        lines = text.split('\n');
+      for (let line of lines) {
+        res += line.trim() + '\n';
+      }
+      return res;
+    };
+
+    let res = text;
+    const pipeline = [fixMath, trimWhitespace];
+    pipeline.forEach((pipe) => (res = pipe(res)));
+    return res;
+  }
+
   render() {
-    // Switch between cell types (code & markdown)
-    let highlightType = undefined;
+    // SWITCH BETWEEN CELL TYPES
+    let highlightType, executionCount;
     switch (this.state.cellType) {
       case 'code':
         this.runCallback = (c) => this.run(c);
         highlightType = languages.py;
+
+        // Format execution counter
+        // Use * if running, blank space if null
+        executionCount = this.state.codeStatus < 2 ? this.executionCount : '*';
+        executionCount = executionCount === null ? ' ' : executionCount;
         break;
       case 'markdown':
         this.runCallback = () => this.setState({ showMarkdown: true });
@@ -123,23 +213,26 @@ export default class Source extends React.Component {
         break;
     }
 
-    // Whether to show the rendered markdown, or just the editor
+    // DISPLAY EDITOR OR RENDERED MARKDOWN
     const mergedCode = this.source.join('');
-    let htmlContent, runButton, executionCount;
+    let cellContent, runButton;
     if (!this.state.showMarkdown) {
-      htmlContent = (
+      cellContent = (
         <div className="cell-content source-code">
           {/* Actual code cell */}
           <TextEditor
             className="source-code-main"
             defaultValue={mergedCode}
-            onChange={(e) => this.updateCellContent(e)}
+            onChange={this.onChangeCallback}
+            onKeyDown={this.onKeyCallback}
             disabled={
               !(this.editable === undefined || this.editable) ? true : false
             }
             highlightType={highlightType}
           />
-          <div className="cell-lang">
+          {/* Run time and Language switcher */}
+          <div className="cell-status">
+            <Timer status={this.state.codeStatus} />
             <button
               className="block-btn cell-type-btn"
               onClick={(_) => this.toggleLang()}
@@ -150,19 +243,19 @@ export default class Source extends React.Component {
         </div>
       );
       runButton = (
-        <button
-          onClick={() => this.runCallback(this.source)}
-          className="cell-run-btn block-btn"
-        >
-          &#9658;
-        </button>
+        <div className="cell-run-btn">
+          <button
+            onClick={() => this.runCallback(this.source)}
+            className=" block-btn"
+          >
+            {this.state.codeStatus > 0 ? '\u{25A0}' : '\u{25B6}'}
+          </button>
+        </div>
       );
     } else {
-      // '$$' has to be in a separate new line to be rendered as a block math equation.
-      const re = /\n?\s*\$\$\s*\n?/g;
-      let newSource = mergedCode.replaceAll(re, '\n$$$\n');
+      const newSource = this.preProcessMarkdown(mergedCode);
       const reenableEditing = () => this.setState({ showMarkdown: false });
-      htmlContent = (
+      cellContent = (
         <div
           className="cell-content source-markdown"
           onDoubleClick={() => reenableEditing()}
@@ -177,29 +270,21 @@ export default class Source extends React.Component {
       );
     }
 
-    // Format execution counter
-    executionCount = !this.state.kernelBusy ? this.state.executionCount : '*';
-    executionCount = executionCount === null ? ' ' : executionCount;
-
     return this.state.shown === 0 ? (
-      <div className="block-hidden" />
+      <div className="source-hidden" />
     ) : (
-      <div
-        className="cell-row"
-        tabIndex="0"
-        onKeyDown={(e) => this.keyCallback(e)}
-      >
+      <div className="cell-row" tabIndex="0" onKeyDown={this.onKeyCallback}>
         {/* Left side of the code editor */}
         <div className="cell-info">
           {/* The cell run button */}
           {runButton}
           {/* The execution counter */}
-          <pre className="cell-header source">
-            {executionCount ? `[${executionCount}]` : null}
+          <pre className="cell-run-count source">
+            {executionCount ? `In [${executionCount}]` : null}
           </pre>
         </div>
         {/* Code itself (or markdown) */}
-        {htmlContent}
+        {cellContent}
       </div>
     );
   }

@@ -5,7 +5,10 @@ import Source from './Source';
 import BlockOutput from './Output';
 import ToggleVisibilityBar from './ToggleVisibilityBar';
 
-function BlockControls(props) {
+import './scss/Block.scss';
+import './scss/BlockControls.scss';
+
+const BlockControls = React.memo(function BlockControls(props) {
   const { deletable, onMove, onInsert, onDelete } = props;
   return (
     <div className="block-controls">
@@ -43,18 +46,26 @@ function BlockControls(props) {
       </button>
     </div>
   );
-}
+});
 
 export default class Block extends React.Component {
   constructor(props) {
     super(props);
     // Cell & metadata structures for reference
-    // NOTE: These aren't updated dynamically
+    // NOTE: These aren't updated dynamically here, see .getCellData()
     this.cell = props.cell;
     this.metadata = this.cell.metadata;
 
+    // Interaction with the kernel
+    this.kernelMessenger = props.kernelMessenger;
+
     // Code cell ref so that we can grab cell changes from it (see below)
     this.sourceRef = createRef(null);
+
+    // Callbacks
+    this.outputCallback = this.addOutput.bind(this);
+    this.sourceVCallback = () => this.toggleVisibility('sourceShown', 2);
+    this.outputVCallback = () => this.toggleVisibility('outputShown', 3);
 
     // Abstracted Cell properties
     this.showMarkdown =
@@ -81,17 +92,10 @@ export default class Block extends React.Component {
     };
   }
 
-  addOutput(output, clear = false) {
-    let tmpOutputs = [];
-    if (!clear) tmpOutputs = [...this.state.outputs];
-    if (Boolean(output)) tmpOutputs.push(output);
-    this.setState({ outputs: tmpOutputs });
-  }
-
   // Check if component should render
+  // Used instead of PureComponent to allow us to update the state from props without a re-render
   shouldComponentUpdate(nextProps, nextState) {
     // Update highlight if props change
-    // Prevents unnecessary re-render (via setState) by setting here
     let updatedHL = nextProps.highlighted !== nextState.highlighted;
     if (updatedHL) {
       nextState.highlighted = nextProps.highlighted;
@@ -103,6 +107,17 @@ export default class Block extends React.Component {
       nextState.sourceShown !== this.state.sourceShown ||
       nextState.outputShown !== this.state.outputShown
     );
+  }
+
+  addOutput(output, clear = false) {
+    this.setState((state) => {
+      let tmpOutputs = [];
+      if (!clear) tmpOutputs = [...state.outputs];
+      if (Boolean(output)) tmpOutputs.push(output);
+      return {
+        outputs: tmpOutputs,
+      };
+    });
   }
 
   getCellData() {
@@ -122,6 +137,12 @@ export default class Block extends React.Component {
     };
   }
 
+  toggleVisibility(type, mod) {
+    let newState = {};
+    newState[type] = (this.state[type] + 1) % mod;
+    this.setState(newState);
+  }
+
   render() {
     const { source, cell_type, execution_count } = this.cell;
     const { deletable, editable } = this.metadata;
@@ -132,20 +153,17 @@ export default class Block extends React.Component {
         <div className="block-source">
           <ToggleVisibilityBar
             highlighted={this.state.highlighted}
-            onClick={() =>
-              this.setState((state) => ({
-                sourceShown: (state.sourceShown + 1) % 2,
-              }))
-            }
+            onClick={this.sourceVCallback}
           />
           <Source
             ref={this.sourceRef}
             source={source}
-            cellType={cell_type}
-            executionCount={execution_count}
             editable={editable}
-            showMarkdown={this.showMarkdown}
+            cellType={cell_type}
             shown={this.state.sourceShown}
+            showMarkdown={this.showMarkdown}
+            executionCount={execution_count}
+            kernelMessenger={this.kernelMessenger}
             updateOutputs={(o, c) => this.addOutput(o, c)}
           />
         </div>
@@ -155,11 +173,7 @@ export default class Block extends React.Component {
           <div className="block-output">
             <ToggleVisibilityBar
               highlighted={this.state.highlighted}
-              onClick={() =>
-                this.setState((state) => ({
-                  outputShown: (state.outputShown + 1) % 3,
-                }))
-              }
+              onClick={this.outputVCallback}
             />
             <BlockOutput
               outputs={this.state.outputs}
