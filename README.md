@@ -6,7 +6,7 @@ Demo: `<TBD>`
 
 ## Install
 ```bash
-npm install --save react-jupyter-notebook
+npm install --save https://github.com/Desousak/react-jupyter-notebook.git
 ```
 
 ## Features 
@@ -58,7 +58,7 @@ import ExampleMessenger from './ExampleMessenger' // Replace with your own messe
 // Remove "ExampleMessenger" if not using execution 
 ReactDOM.render(
   <React.StrictMode>
-    <JupyterViewer rawIpynb={nb_test} kernelMessenger={ExampleMessenger}/>
+    <JupyterViewer rawIpynb={nb_test} MessengerObj={ExampleMessenger}/>
   </React.StrictMode>,
   document.getElementById('root')
 );
