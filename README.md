@@ -1,71 +1,95 @@
 # react-jupyter-notebook
 
-A simple React component that renders .ipynb files just like how they are rendered by JupyterLab.
+A fork of <a href="https://github.com/Joeyonng/react-jupyter-notebook">react-jupyter-notebook</a> that allows for the rendering and execution of Jupyter notebook files (`.ipynb`).
 
-Demo: https://joeyonng.github.io/react-jupyter-notebook/
+Demo: `<TBD>`
 
-### Why
-I created this component because I want to embed a pure frontend jupyter notebooks (ipynb files) viewer into my personal
-website, which is built using React. 
-
-This project was inspired by [React-Jupyter-Viewer](https://github.com/ShivBhosale/React-Jupyter-Viewer). I still 
-reinvented the wheel since I prefer the original looking of JupyterLab.
-
-### Install
+## Install
 ```bash
 npm install --save react-jupyter-notebook
 ```
 
-### Features
-* [X] Nearly identical looking to original JupyterLab interface.
-* [X] Can render codes, images, outputs, markdown(equations) and HTML in the notebook.
-* [X] Enable resizing the height of the scrolled output. 
-* [X] Can change the alignment of the media outputs.
-* [X] Customisable code block styling.
+## Features 
+* Nearly identical looking to original JupyterLab interface.
+* Can render codes, images, outputs, and markdown (with table & equation support).
+* Enable resizing the height of the scrolled output. 
+* Execution of code with user-defined messaging.
+* `(SOON!)` Can change the alignment of the media outputs.
+* `(SOON!)` Customisable code block styling.
 
-### Usage
+## Usage
+```javascript
+// If you want code execution capabilities - you must provide your own connection code
+// For example:
+import { DefaultKernelMessenger } from 'react-jupyter-notebook';
+
+class ExampleMessenger extends DefaultKernelMessenger {
+  constructor() {
+    // Init connection here
+    // Constructor is not passed any parameters
+  }
+
+  runCode(code, callbackFunc) {
+    // Run the code
+    // Returns true if successful and adds the cell to the execution queue (via callbackFunc), false otherwise
+    return false;
+  }
+
+  signalKernel(signal) {
+    // Returns true if successful, false otherwise
+    return false;
+  }
+
+  connected() {
+    // Returns true if connected, false otherwise
+    return false;
+  }
+}
+```
+
+
 ```javascript
 import React from 'react';
 import ReactDOM from 'react-dom';
 import JupyterViewer from "react-jupyter-notebook";
 import nb_test from "./nb_test.json"; // You need to read the .ipynb file into a JSON Object.
+import ExampleMessenger from './ExampleMessenger' // Replace with your own messenger class
 
+// Remove "ExampleMessenger" if not using execution 
 ReactDOM.render(
   <React.StrictMode>
-    <JupyterViewer rawIpynb={nb_test}/>
+    <JupyterViewer rawIpynb={nb_test} kernelMessenger={ExampleMessenger}/>
   </React.StrictMode>,
   document.getElementById('root')
 );
 ```
 
-### Props
-| Prop name       | Type    | Description                                                     | (*default*) Values                 |
-|-----------------|---------|-----------------------------------------------------------------|------------------------------------|
-| rawIpynb        | Object  | The JSON object converted from the .ipynb file.                 |                                    |
-| language        | String  | The programming language used in the notebook.                  | *"python"*, [others][language]     |
-| showLineNumbers | Boolean | Show or hide the line numbers.                                  | *true*, false                      |
-| mediaAlign      | String  | How to align medias (images, HTML).                             | *"center"*, "left", "right"        |
-| displaySource   | String  | How source cells are displayed.                                 | *"auto"*, "hide", "show"           |
-| displayOutput   | String  | How output cells are displayed.                                 | *"auto"*, "hide", "show", "scroll" |
-| codeBlockStyles | Object  | Customize code cells styles. Use JupyterLab theme if undefined. | *undefined*, {...}                 |
+## Props
+| Prop name       | Type     | Description                                                           | (*default*) Values                 |
+|-----------------|----------|-----------------------------------------------------------------------|------------------------------------|
+| rawIpynb        | Object   | The JSON object converted from the .ipynb file.                       | `{ cells: [] }`                    |
+| KernelMessenger | Function | The class responsible for handling interactions with a Jupyter kernel | [KernelMessenger](src/lib/KernelMessenger.js) |
 
-### Customising code block styles (codeBlockStyles prop)
-I use [React Syntax Highlighter](https://github.com/react-syntax-highlighter/react-syntax-highlighter) for the syntax 
-highlighting. One little problem with React Syntax Highlighter is that the whole line number container cannot be 
-separately styled. The line number part in the original JupyterLab theme has a different background color with the codes 
-part, so they need to be separately styled. My solution is to use two `<SyntaxHighlighter/>` components: one displays line 
-numbers, and the other displays codes themselves. 
+## Todo
+* [ &nbsp; ] Customizable code block styling
+* [ &nbsp; ] Reimplement customizable styles
+* [ &nbsp; ] Customizable output cutoff thresholds 
+* [ &nbsp; ] Status bar for switching kernels, signalling the kernel, etc.
+* [ &nbsp; ] Support for more ascii values in output (other than `\b` and `\r`)
+* [ &nbsp; ] Make rapid execution output updates faster (through memoization?)
+* [ &nbsp; ] Fix vertical scaling of code cells & output (add mobile support?)
+* [ &nbsp; ] Refactor such that prop-drilling isn't needed to pass along the [KernelMessenger](src/lib/KernelMessenger.js)
+* [ &nbsp; ] Add a default kernel messenger that interacts with Python via WASM (with <a href="https://github.com/jupyterlite/jupyterlite">JupyterLite</a>?)
 
-You can use codeBlockStyles prop to pass the props to the SyntaxHighlighter to customize your own code block styles.
-Please read the docs of React Syntax Highlighter if you want to use this prop. 
+## Notes
 
-| Property Name            | Type   | Description                                              | Which `<SyntaxHighlighter/>` |
-|--------------------------|--------|----------------------------------------------------------|------------------------------|
-| hljsStyle                | String | Name of the highlight.js style object. See [here][hljs]. | Both line number and code.   |
-| lineNumberStyle          | Object | Style object for every line numbers object.              | Line number.                 |
-| lineNumberContainerStyle | Object | Style object for the container of line numbers.          | Line number.                 |
-| codeContainerStyle       | Object | Style object for the container of the codes.             | Code.                        |
-
-[language]: https://github.com/react-syntax-highlighter/react-syntax-highlighter/blob/master/AVAILABLE_LANGUAGES_HLJS.MD
-[hljs]: https://github.com/react-syntax-highlighter/react-syntax-highlighter/blob/master/AVAILABLE_STYLES_HLJS.MD
-
+### `codeStatus` Reference:
+* Within [Source.js](src/lib/Source.js) an integer variable titled `codeStatus` is used to keep track of the state of the code's execution within the kernel. 
+* See below for an explanation of what the variable can be:
+  | Value  | Description                                                     
+  |--------|------------------------------------------------------------------------------|
+  | -2     | An error occurred during last execution                                      |    
+  | -1     | Code has ***never*** been sent (first load of cell)                          |    
+  |  0     | Code hasn't been sent to the kernel                                          |    
+  |  1     | Code is sent but not running yet                                             |    
+  |  2     | Code is sent and currently running                                           |    

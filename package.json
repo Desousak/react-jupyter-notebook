@@ -1,23 +1,24 @@
 {
   "name": "react-jupyter-notebook",
-  "version": "0.3.2",
-  "homepage": "https://Joeyonng.github.io/react-jupyter-notebook",
+  "version": "0.4.0",
+  "homepage": "https://github.com/Desousak/react-jupyter-notebook",
   "license": "MIT",
   "private": false,
-  "description": "A simple React component that renders .ipynb files just like how they are rendered by Jupyter Lab",
+  "description": "A React component that renders .ipynb files and allows for code execution.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Joeyonng/react-jupyter-notebook"
+    "url": "https://github.com/Desousak/react-jupyter-notebook"
   },
   "keywords": [
     "React",
     "Jupyter",
     "Notebook",
+    "Execution",
     "ipynb"
   ],
   "author": {
-    "name": "Litao Qiao",
-    "email": "checkpppp@gmail.com"
+    "name": "Kevin Desousa",
+    "email": "kevindesousa3@gmail.com"
   },
   "files": [
     "dist"
@@ -57,10 +58,9 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
     "prepublish": "rimraf dist && mkdir dist && NODE_ENV=production webpack",
-    "start": "react-scripts start",
+    "start": "BROWSER=none react-scripts start",
     "build": "react-scripts build",
-    "eject": "react-scripts eject",
-    "watch": "nodemon -e js,ts,scss --ignore dist --exec \"rimraf dist && mkdir dist && NODE_ENV=development webpack && yalc push --replace\""
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
