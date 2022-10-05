@@ -52,7 +52,7 @@ export default class ExampleMessenger extends DefaultKernelMessenger {
     if (this.timeout !== null) {
       this.timeout.then(sendResponse);
     } else {
-      this.timeout = new Promise((res) => res()).then((_) => sendResponse());
+      this.timeout = Promise.resolve().then((_) => sendResponse());
     }
 
     // Signal that the code was sent
