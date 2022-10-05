@@ -2,7 +2,7 @@
 
 A fork of <a href="https://github.com/Joeyonng/react-jupyter-notebook">react-jupyter-notebook</a> that allows for the rendering and execution of Jupyter notebook files (`.ipynb`).
 
-Demo: `<TBD>`
+Demo: <a href="https://desousak.github.io/react-jupyter-notebook">desousak.github.io/react-jupyter-notebook</a>
 
 ## Install
 
