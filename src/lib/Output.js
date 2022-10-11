@@ -236,6 +236,8 @@ function Output(props) {
                     </div>
                   );
                 } else if ('text/html' in output_data) {
+                  const rawData = output_data['text/html'];
+                  // Data can be in either a string OR array??
                   htmlContent = (
                     <div
                       className="cell-content output-display"
@@ -243,7 +245,10 @@ function Output(props) {
                         justifyContent: 'start',
                       }}
                       dangerouslySetInnerHTML={{
-                        __html: output_data['text/html'].join(''),
+                        __html:
+                          typeof rawData === 'string'
+                            ? rawData
+                            : rawData.join(''),
                       }}
                     />
                   );

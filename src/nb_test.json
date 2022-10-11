@@ -27,10 +27,12 @@
       },
       "outputs": [],
       "source": [
-        "import time\n",
-        "for i in range(10):\n",
-        " print(i + 1)\n",
-        " time.sleep(1)\n",
+        "#import time\n",
+        "#for i in range(10):\n",
+        "# print(i + 1)\n",
+        "# time.sleep(1)\n",
+        "import asyncio\n",
+        "await asyncio.sleep(10)\n",
         "1"
       ]
     },

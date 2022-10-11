@@ -166,10 +166,8 @@ class DefaultKernelMessenger {
   // Code-Cell Interactions
   // Functions here MUST be implemented
   // %%%%%%%%%%%%%%%%%%%%%%
-  runCode(code, callbackFunc) {
+  runCode(code, callback) {
     // Run the code
-    // Returns true if successful and adds the cell to the execution queue (via callbackFunc), false otherwise
-    return false;
   }
 
   signalKernel(signal) {
