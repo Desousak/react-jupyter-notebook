@@ -1,5 +1,6 @@
 import React from 'react';
 import Timer from './Timer';
+import CellRunBtn from './CellRunBtn';
 import './scss/Source.scss';
 
 /* Code-cell Styling */
@@ -197,16 +198,11 @@ export default class Source extends React.PureComponent {
 
   render() {
     // SWITCH BETWEEN CELL TYPES
-    let highlightType, executionCount;
+    let highlightType;
     switch (this.state.cellType) {
       case 'code':
-        this.runCallback = (c) => this.run(c);
+        this.runCallback = (_) => this.run(this.source);
         highlightType = languages.py;
-
-        // Format execution counter
-        // Use * if running, blank space if null
-        executionCount = this.state.codeStatus < 2 ? this.executionCount : '*';
-        executionCount = executionCount === null ? ' ' : executionCount;
         break;
       case 'markdown':
         this.runCallback = () => this.setState({ showMarkdown: true });
@@ -217,7 +213,7 @@ export default class Source extends React.PureComponent {
 
     // DISPLAY EDITOR OR RENDERED MARKDOWN
     const mergedCode = this.source.join('');
-    let cellContent, runButton;
+    let cellContent;
     if (!this.state.showMarkdown) {
       cellContent = (
         <div className="cell-content source-code">
@@ -244,16 +240,6 @@ export default class Source extends React.PureComponent {
           </div>
         </div>
       );
-      runButton = (
-        <div className="cell-run-btn">
-          <button
-            onClick={() => this.runCallback(this.source)}
-            className=" block-btn"
-          >
-            {this.state.codeStatus > 0 ? '\u{25A0}' : '\u{25B6}'}
-          </button>
-        </div>
-      );
     } else {
       const newSource = this.preProcessMarkdown(mergedCode);
       const reenableEditing = () => this.setState({ showMarkdown: false });
@@ -277,14 +263,13 @@ export default class Source extends React.PureComponent {
     ) : (
       <div className="cell-row" tabIndex="0" onKeyDown={this.onKeyCallback}>
         {/* Left side of the code editor */}
-        <div className="cell-info">
-          {/* The cell run button */}
-          {runButton}
-          {/* The execution counter */}
-          <pre className="cell-run-count source">
-            {executionCount !== undefined ? `In [${executionCount}]` : null}
-          </pre>
-        </div>
+        <CellRunBtn
+          runCallback={this.runCallback}
+          codeStatus={this.state.codeStatus}
+          executionCount={this.executionCount}
+          showMarkdown={this.state.showMarkdown}
+          isMarkdownCell={this.state.cellType === 'markdown'}
+        />
         {/* Code itself (or markdown) */}
         {cellContent}
       </div>
