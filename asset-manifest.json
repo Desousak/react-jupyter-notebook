@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "https://desousak.github.io/react-jupyter-notebook/static/css/main.f16a42d2.css",
-    "main.js": "https://desousak.github.io/react-jupyter-notebook/static/js/main.f70cac6a.js",
+    "main.css": "https://desousak.github.io/react-jupyter-notebook/static/css/main.c5b28547.css",
+    "main.js": "https://desousak.github.io/react-jupyter-notebook/static/js/main.febd75d3.js",
     "static/media/KaTeX_AMS-Regular.ttf": "https://desousak.github.io/react-jupyter-notebook/static/media/KaTeX_AMS-Regular.853be92419a6c3766b9a.ttf",
     "static/media/KaTeX_Main-Regular.ttf": "https://desousak.github.io/react-jupyter-notebook/static/media/KaTeX_Main-Regular.9eba1d77abcf2aa6e94e.ttf",
     "static/media/KaTeX_Main-Bold.ttf": "https://desousak.github.io/react-jupyter-notebook/static/media/KaTeX_Main-Bold.8169508bf58f8bd92ad8.ttf",
@@ -62,12 +62,10 @@
     "static/media/KaTeX_Size4-Regular.woff2": "https://desousak.github.io/react-jupyter-notebook/static/media/KaTeX_Size4-Regular.e418bf257af1052628d8.woff2",
     "static/media/KaTeX_Size3-Regular.woff": "https://desousak.github.io/react-jupyter-notebook/static/media/KaTeX_Size3-Regular.7947224e8a9914fa332b.woff",
     "static/media/KaTeX_Size3-Regular.woff2": "https://desousak.github.io/react-jupyter-notebook/static/media/KaTeX_Size3-Regular.e1951519f6f0596f7356.woff2",
-    "index.html": "https://desousak.github.io/react-jupyter-notebook/index.html",
-    "main.f16a42d2.css.map": "https://desousak.github.io/react-jupyter-notebook/static/css/main.f16a42d2.css.map",
-    "main.f70cac6a.js.map": "https://desousak.github.io/react-jupyter-notebook/static/js/main.f70cac6a.js.map"
+    "index.html": "https://desousak.github.io/react-jupyter-notebook/index.html"
   },
   "entrypoints": [
-    "static/css/main.f16a42d2.css",
-    "static/js/main.f70cac6a.js"
+    "static/css/main.c5b28547.css",
+    "static/js/main.febd75d3.js"
   ]
 }
