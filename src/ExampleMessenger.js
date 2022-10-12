@@ -1,52 +1,62 @@
 import { DefaultKernelMessenger } from './lib/JupyterViewer';
-import { PyoliteKernel } from './pyolite-kernel/pyoliteKernel.ts';
+
+function delay(time) {
+  return new Promise((res, rej) => setTimeout(res, time));
+}
 
 export default class ExampleMessenger extends DefaultKernelMessenger {
   constructor() {
     super();
     this.timeout = null;
-    this.kernel = null;
-    this.runQueue = [];
-
-    const kernel = new PyoliteKernel({
-      id: 'pyolite-kernel',
-      name: 'Pyolite',
-      sendMessage: (d) => this.#kernelResponse(d),
-    });
-    kernel.ready.then((_) => {
-      this.kernel = kernel;
-    });
   }
 
-  #kernelResponse(res) {
-    this.runQueue[0].callback(res);
-  }
+  runCode(code, callbackFunc) {
+    const sendResponse = () => {
+      // Signal our "kernel" is busy
+      callbackFunc({
+        header: { msg_type: 'status' },
+        content: { execution_state: 'busy' },
+      });
+      // Send the execution counter
+      callbackFunc({
+        header: { msg_type: 'execute_input' },
+        content: { execution_count: '?' },
+      });
 
-  #execute(code) {
-    const res = this.kernel.handleMessage({
-      header: {
-        msg_type: "execute_request",
-        session: "",
-      },
-      content: {
-        code: code.join(''),
-      }
-    });
-    res.then((d) => {
-      // Remove finished cell's callback & run the next code
-      this.runQueue.shift();
-      if (this.runQueue.length > 0) this.#execute(this.runQueue[0].code);
-    });
-  }
+      const msDelay = 2000;
+      return delay(msDelay).then((_) => {
+        // Stream results
+        callbackFunc({
+          header: { msg_type: 'error' },
+          content: {
+            output_type: 'error',
+            traceback: ['Code entered was:\n'],
+          },
+        });
+        callbackFunc({
+          header: { msg_type: 'stream' },
+          content: {
+            name: 'stdout',
+            output_type: 'stream',
+            text: code,
+          },
+        });
+        // Signal our "kernel" is idle
+        callbackFunc({
+          header: { msg_type: 'status' },
+          content: { execution_state: 'idle' },
+        });
+      });
+    };
 
-  runCode(code, callback) {
-    if (this.connected()) {
-      this.runQueue.push({ code, callback });
-      if (this.runQueue.length === 1) {
-        // First in queue - run your code
-        this.#execute(code);
-      }
+    if (this.timeout !== null) {
+      this.timeout.then(sendResponse);
+    } else {
+      this.timeout = new Promise((res) => res()).then((_) => sendResponse());
     }
+
+    // Signal that the code was sent
+    return true;
   }
 
   signalKernel(signal) {
@@ -55,6 +65,6 @@ export default class ExampleMessenger extends DefaultKernelMessenger {
   }
 
   connected() {
-    return this.kernel !== null;
+    return true;
   }
 }
