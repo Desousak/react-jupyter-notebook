@@ -3,6 +3,7 @@ import nb_test from './nb_test.json';
 import { JupyterViewer } from './lib/JupyterViewer';
 
 import ExampleMessenger from './ExampleMessenger';
+import PyoliteMessenger from './PyoliteMessenger';
 
 function App(props) {
   const [state, setState] = useState({
@@ -40,7 +41,7 @@ function App(props) {
       {!state.rawIpynb ? null : (
         <JupyterViewer
           rawIpynb={state.rawIpynb}
-          MessengerObj={ExampleMessenger}
+          MessengerObj={PyoliteMessenger}
         />
       )}
     </React.Fragment>

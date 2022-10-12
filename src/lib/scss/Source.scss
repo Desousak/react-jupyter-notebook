@@ -62,37 +62,6 @@
     display: flex;
     flex-direction: row;
 
-    .cell-info {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-
-      min-width: 54px;
-      margin: 0 0 0 0;
-      padding: 0 10px 0 0;
-
-      .cell-run-btn {
-        flex-grow: 1;
-        & button {
-          position: sticky !important;
-          top: 0;
-        }
-      }
-
-      .cell-run-count {
-        box-sizing: border-box;
-        margin: 0;
-
-        &.source {
-          color: #307fc1;
-        }
-
-        &.output {
-          color: #bf5b3d;
-        }
-      }
-    }
-
     .cell-content {
       width: 100%;
       margin: 0 0 0 0;
