@@ -16,6 +16,7 @@ npm install --save https://github.com/Desousak/react-jupyter-notebook.git
 - Can render codes, images, outputs, and markdown (with table & equation support).
 - Enable resizing the height of the scrolled output.
 - Execution of code with user-defined messaging.
+  - Features support for Pyolite - allowing for execution of Python code through JS (see [notes](#pyolite)).
 - `(SOON!)` Can change the alignment of the media outputs.
 - `(SOON!)` Customisable code block styling.
 
@@ -83,7 +84,7 @@ ReactDOM.render(
 - [ &nbsp; ] Make rapid execution output updates faster (through memoization?)
 - [ &nbsp; ] Fix vertical scaling of code cells & output (add mobile support?)
 - [ &nbsp; ] Refactor such that prop-drilling isn't needed to pass along the [KernelMessenger](src/lib/JupyterViewer.js)
-- [ &nbsp; ] Add a default kernel messenger that interacts with Python via WASM (with <a href="https://github.com/jupyterlite/jupyterlite">JupyterLite</a>?)
+- [✓] Add a default kernel messenger that interacts with Python via WASM (with <a href="https://github.com/jupyterlite/jupyterlite">JupyterLite</a>)
 
 ## Notes
 
@@ -98,3 +99,11 @@ ReactDOM.render(
   | 0 | Code hasn't been sent to the kernel |  
   | 1 | Code is sent but not running yet |  
   | 2 | Code is sent and currently running |
+
+### Pyolite:
+
+- The current implementation of the Pyolite kernel has four parts:
+  1. [pubic/pyodide.js](pubic/pyodide.js): [Pyodide](https://pyodide.org/en/stable/) is a Python distribution for the browser and Node.js based on WebAssembly. It is used to run the Jupyter Kernel.
+  2. [src/Pyolite-Kernel/](src/pyolite-kernel/): A copy of the Kernel class made by [@joyceerhl](https://github.com/joyceerhl/vscode-pyolite). 
+  3. [src/ExampleMessenger.js](src/ExampleMessenger.js): A class that interfaces with the Pyolite Kernel and forwards code & results to the library.
+  4. [public/Wheels/](public/wheels/): The pure-python wheels that are loaded into Pyodide. Provided from the [JupyterLite Project](https://github.com/jupyterlite/jupyterlite).

@@ -13,6 +13,22 @@
     div > .cell-row > * {
       padding: 5px;
     }
+
+    & .output-std {
+      // padding: 5px 0 5px 5px;
+      box-sizing: border-box;
+    }
+
+    & .output-err {
+      // padding: 5px 0 0 5px;
+      box-sizing: border-box;
+      background-color: #ffdddd;
+    }
+
+    & .output-display {
+      display: flex;
+      flex-direction: row;
+    }
   }
 }
 

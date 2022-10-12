@@ -47,14 +47,10 @@ export default class Source extends React.PureComponent {
   run(code) {
     if (this.kernelMessenger.connected()) {
       if (this.state.codeStatus <= 0) {
-        const runStatus = this.kernelMessenger.runCode(
-          code,
-          this.parseResponse.bind(this)
+        // Reset source but keep output for now - will be reset later
+        this.resetSource(false, null, { codeStatus: 1 }, () =>
+          this.kernelMessenger.runCode(code, this.parseResponse.bind(this))
         );
-        if (runStatus) {
-          // Reset source but keep output for now - will be reset later
-          this.resetSource(false, null, { codeStatus: 1 });
-        }
       } else {
         // Stop execution
         if (this.kernelMessenger.signalKernel(2))
@@ -70,16 +66,20 @@ export default class Source extends React.PureComponent {
     // Check is used to prevent running code & change of cell type race condition
     if (this.state.cellType !== 'markdown') {
       // Messages expected (in order of occurrence)
-      const msgContent = msg.content;
-      switch (msg.msg_type) {
+      const msgType = msg.header.msg_type,
+        msgContent = msg.content;
+
+      switch (msgType) {
         case 'status':
-          // Kernel status (usually busy or idle, first and last messages)
+          // Kernel status (usually busy or idle -> first and last messages)
           let kernelBusy = msgContent.execution_state === 'busy';
+
           if (this.state.codeStatus !== -2) {
             if (kernelBusy) {
               // Clear the output only when we get response from the kernel
               this.resetSource(true, false, { codeStatus: 2 });
             } else if (this.executionCount === null) {
+              // TODO: Investigate if this causes bugs
               // Execution suddenly ended...
               this.setState({ codeStatus: -2 });
             } else {
@@ -93,21 +93,21 @@ export default class Source extends React.PureComponent {
           this.executionCount = msgContent.execution_count;
           break;
         case 'error':
-          // Run same code as 'stream' but log error
-          this.setState({ codeStatus: -2 }, (_) =>
-            this.updateOutputs({ ...msgContent, output_type: msg.msg_type })
-          );
-          break;
+          this.setState({ codeStatus: -2 });
+        // Fall through
         case 'stream':
         case 'display_data':
         case 'execute_result':
           // Execution Results - add to outputs array (third to second last message)
-          this.updateOutputs({ ...msgContent, output_type: msg.msg_type });
+          this.updateOutputs({
+            ...msgContent,
+            output_type: msgType,
+          });
           break;
         case 'shutdown_reply':
-        default:
           this.resetSource(true, false, { codeStatus: -2 });
           break;
+        default:
       }
     }
   }
@@ -122,7 +122,9 @@ export default class Source extends React.PureComponent {
     callback
   ) {
     if (clearOutput) this.updateOutputs(null, true);
-    if (setExecCount !== false) this.executionCount = setExecCount;
+    if (setExecCount !== false) {
+      this.executionCount = setExecCount;
+    }
     if (resetVals) this.setState(resetVals, callback);
   }
 
@@ -280,7 +282,7 @@ export default class Source extends React.PureComponent {
           {runButton}
           {/* The execution counter */}
           <pre className="cell-run-count source">
-            {executionCount ? `In [${executionCount}]` : null}
+            {executionCount !== undefined ? `In [${executionCount}]` : null}
           </pre>
         </div>
         {/* Code itself (or markdown) */}

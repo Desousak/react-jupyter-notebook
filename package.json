@@ -25,6 +25,7 @@
   ],
   "main": "dist/JupyterViewer.js",
   "dependencies": {
+    "@lumino/signaling": "^1.10.2",
     "ansi-to-react": "^6.1.6",
     "katex": "^0.16.2",
     "prismjs": "^1.29.0",
@@ -39,10 +40,14 @@
     "socket.io-client": "^4.5.2"
   },
   "devDependencies": {
+    "@jupyterlab/services": "*",
+    "@lumino/coreutils": "*",
+    "@lumino/disposable": "*",
     "gh-pages": "^4.0.0",
     "http-proxy-middleware": "^2.0.6",
     "react-scripts": "^5.0.1",
-    "sass": "^1.55.0"
+    "sass": "^1.55.0",
+    "uuid": "^9.0.0"
   },
   "peerDependencies": {
     "react": "^17.0.2",
@@ -51,8 +56,8 @@
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
-    "start": "BROWSER=none react-scripts start",
-    "build": "react-scripts build",
+    "start": "export $(cat .env | xargs) && react-scripts start",
+    "build": "export $(cat .env | xargs) && react-scripts build",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
