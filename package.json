@@ -25,7 +25,6 @@
   ],
   "main": "dist/JupyterViewer.js",
   "dependencies": {
-    "@lumino/signaling": "^1.10.2",
     "ansi-to-react": "^6.1.6",
     "katex": "^0.16.2",
     "prismjs": "^1.29.0",
@@ -36,13 +35,13 @@
     "react-syntax-highlighter": "^15.5.0",
     "rehype-katex": "^6.0.2",
     "remark-gfm": "^3.0.1",
-    "remark-math": "^5.1.1",
-    "socket.io-client": "^4.5.2"
+    "remark-math": "^5.1.1"
   },
   "devDependencies": {
     "@jupyterlab/services": "*",
     "@lumino/coreutils": "*",
     "@lumino/disposable": "*",
+    "@lumino/signaling": "^1.10.2",
     "gh-pages": "^4.0.0",
     "http-proxy-middleware": "^2.0.6",
     "react-scripts": "^5.0.1",
