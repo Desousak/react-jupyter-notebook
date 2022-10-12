@@ -25,23 +25,26 @@ export default class CellRunBtn extends React.Component {
       isMarkdownCell,
     } = this.state;
     const hidden = codeStatus <= 0 && !isMarkdownCell;
+
     return (
       <div className="cell-info">
-        {showMarkdown === false && (
-          <div className="cell-run-btn">
-            <button
-              onClick={runCallback}
-              className={' block-btn' + (hidden ? ' hidden' : '')}
-            >
-              {codeStatus > 0 ? '\u{25A0}' : '\u{25B6}'}
-            </button>
-          </div>
-        )}
-        {hidden ? (
-          <pre className="cell-run-count source">
-            {executionCount !== undefined ? `[${executionCount}]` : null}
-          </pre>
-        ) : null}
+        <div className="sticky-wrapper">
+          {showMarkdown === false && (
+            <div className="cell-run-btn">
+              <button
+                onClick={runCallback}
+                className={'block-btn' + (hidden ? ' hidden' : '')}
+              >
+                {codeStatus > 0 ? '\u{25A0}' : '\u{25B6}'}
+              </button>
+            </div>
+          )}
+          {hidden ? (
+            <pre className="cell-run-count source">
+              {executionCount !== undefined ? `[${executionCount}]` : null}
+            </pre>
+          ) : null}
+        </div>
       </div>
     );
   }

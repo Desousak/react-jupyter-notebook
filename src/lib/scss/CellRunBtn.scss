@@ -1,27 +1,29 @@
 .block .cell-info {
-  position: relative;
-  min-width: 54px;
-  margin: 0 10px 0 0;
+  margin-right: 1rem;
+  vertical-align: middle;
 
-  & > * {
+  .sticky-wrapper {
+    position: sticky !important;
+    top: 0;
+    width: 2rem;
+    // TODO: Replace this so that it doesn't reply on a hard-coded line height
+    height: 26px;
+  }
+
+  .cell-run-btn,
+  .cell-run-count {
     position: absolute;
     right: 0;
-    height: 26px;
   }
 
   .cell-run-btn {
     z-index: 1;
-
     & button {
-      position: sticky !important;
-      top: 0;
-
       &.hidden {
         opacity: 0;
         transition: opacity 0.5s cubic-bezier(0, 0, 0.2, 1);
       }
     }
-
     &:hover {
       & .hidden {
         opacity: 1;
@@ -38,6 +40,7 @@
 
     vertical-align: middle;
     text-align: center;
+
     // TODO: Replace this so that it doesn't reply on a hard-coded line height
     line-height: 2;
 
