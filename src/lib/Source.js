@@ -198,11 +198,12 @@ export default class Source extends React.PureComponent {
 
   render() {
     // SWITCH BETWEEN CELL TYPES
-    let highlightType;
+    let highlightType, executionCount;
     switch (this.state.cellType) {
       case 'code':
         this.runCallback = (_) => this.run(this.source);
         highlightType = languages.py;
+        executionCount = (this.executionCount !== null) ? this.executionCount : " ";
         break;
       case 'markdown':
         this.runCallback = () => this.setState({ showMarkdown: true });
@@ -266,7 +267,7 @@ export default class Source extends React.PureComponent {
         <CellRunBtn
           runCallback={this.runCallback}
           codeStatus={this.state.codeStatus}
-          executionCount={this.executionCount}
+          executionCount={executionCount}
           showMarkdown={this.state.showMarkdown}
           isMarkdownCell={this.state.cellType === 'markdown'}
         />
