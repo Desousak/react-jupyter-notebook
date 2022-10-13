@@ -1,0 +1,65 @@
+.block .cell-info {
+  vertical-align: middle;
+  min-width: 54px;
+
+  .sticky-wrapper {
+    position: sticky !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    // TODO: REPLACE WITH VARIABLE? Uses status bar height
+    top: 48px;
+    width: 100%;
+    height: 100%;
+
+    .cell-run-btn,
+    .cell-run-count {
+      position: absolute;
+    }
+
+    .cell-run-btn {
+      z-index: 1;
+
+      & button {
+        border-radius: 2px;
+        font-size: 20px;
+        height: 22px;
+        line-height: 17px;
+        padding-bottom: 4px;
+
+        &[hidden] {
+          opacity: 0;
+          transition: opacity 0.5s cubic-bezier(0, 0, 0.2, 1);
+        }
+      }
+      &:hover {
+        & [hidden] {
+          opacity: 1;
+        }
+        & + .cell-run-count {
+          display: none;
+        }
+      }
+    }
+
+    .cell-run-count {
+      // TODO: Replace this so that it doesn't reply on a hard-coded line height
+      line-height: 1.75;
+    }
+  }
+
+  .cell-run-count {
+    box-sizing: border-box;
+    margin: 0;
+    vertical-align: middle;
+    text-align: center;
+
+    &.source {
+      color: #307fc1;
+    }
+
+    &.output {
+      color: #bf5b3d;
+    }
+  }
+}

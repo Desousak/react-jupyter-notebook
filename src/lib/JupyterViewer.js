@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import './scss/JupyterViewer.scss';
 
 import Block from './Block';
+import StatusBar from './StatusBar';
+import BlockBtn from './BlockBtn';
 
 // TODO: CREATE A STATUS BAR THAT ALLOWS FOR KERNEL STATUS, SWITCHING, AND SIGNALLING
 class JupyterViewer extends React.Component {
@@ -51,7 +53,7 @@ class JupyterViewer extends React.Component {
     return Math.random(100).toString(36).slice(2);
   }
 
-  addCell(index = this.state.cells.length, type = 'code') {
+  addCell(index = this.state.clickCellIndex + 1, type = 'code') {
     if (
       index !== undefined &&
       index > -1 &&
@@ -112,6 +114,11 @@ class JupyterViewer extends React.Component {
   render() {
     return (
       <div className="jupyter-viewer">
+        <StatusBar
+          kernelMessenger={this.kernelMessenger}
+          addCell={(type) => this.addCell(undefined)}
+        />
+
         {this.state.cells.map((cell, index) => {
           return (
             <div
@@ -137,18 +144,14 @@ class JupyterViewer extends React.Component {
           );
         })}
         <div className="add-buttons">
-          <button
-            className="add-code-btn"
-            onClick={(_) => this.addCell(undefined, 'code')}
-          >
-            + Code
-          </button>
-          <button
-            className="add-markdown-btn"
-            onClick={(_) => this.addCell(undefined, 'markdown')}
-          >
-            + Markdown
-          </button>
+          <BlockBtn
+            text="+ Code"
+            callback={() => this.addCell(this.state.cells.length, 'code')}
+          />
+          <BlockBtn
+            text="+ Markdown"
+            callback={() => this.addCell(this.state.cells.length, 'markdown')}
+          />
         </div>
       </div>
     );
@@ -160,6 +163,28 @@ class DefaultKernelMessenger {
   constructor() {
     // Init connection here
     // Constructor is not passed any parameters, set them here instead
+  }
+
+  kernelInfo() {
+    // Return a promise containing info about the kernel
+    return Promise.resolve({
+      status: 'ok',
+      protocol_version: 'X.Y.Z',
+      implementation: '',
+      implementation_version: 'X.Y.Z',
+      language_info: {
+        name: '',
+        version: 'X.Y.Z',
+        mimetype: '',
+        file_extension: '',
+        pygments_lexer: '',
+        codemirror_mode: '',
+        nbconvert_exporter: '',
+      },
+      banner: '',
+      debugger: false,
+      help_links: [{ text: '', url: '' }],
+    });
   }
 
   // %%%%%%%%%%%%%%%%%%%%%%

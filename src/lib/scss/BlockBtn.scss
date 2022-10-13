@@ -1,0 +1,26 @@
+.jupyter-viewer .block-btn {
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: monospace;
+  user-select: none;
+
+  display: flex;
+  align-items: center;
+  // padding: 2px 6px 3px 6px;
+  padding: 3px 6px;
+
+  &:not([disabled]) {
+    cursor: pointer;
+    &:hover {
+      background: rgb(211, 211, 211);
+    }
+    &:active {
+      background: rgb(180, 180, 180);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.25;
+  }
+}

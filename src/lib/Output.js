@@ -125,7 +125,7 @@ function buildOutputRow(htmlContent, key = null, execCount = null) {
     <div key={key} className="cell-row">
       <div className="cell-info">
         <pre className="cell-run-count output">
-          {execCount ? `Out [${execCount}]` : null}
+          {execCount ? `[${execCount}]` : null}
         </pre>
       </div>
       {htmlContent}

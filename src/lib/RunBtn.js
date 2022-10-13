@@ -1,7 +1,8 @@
 import React from 'react';
-import './scss/CellRunBtn.scss';
+import BlockBtn from './BlockBtn';
+import './scss/RunBtn.scss';
 
-export default class CellRunBtn extends React.Component {
+export default class RunBtn extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -31,12 +32,10 @@ export default class CellRunBtn extends React.Component {
         <div className="sticky-wrapper">
           {showMarkdown === false && (
             <div className="cell-run-btn">
-              <button
-                onClick={runCallback}
-                className={'block-btn' + (hidden ? ' hidden' : '')}
-              >
-                {codeStatus > 0 ? '\u{25A0}' : '\u{25B6}'}
-              </button>
+              <BlockBtn callback={runCallback} hidden={hidden}>
+                {' '}
+                {codeStatus > 0 ? '\u{25A0}' : '\u{25B6}'}{' '}
+              </BlockBtn>
             </div>
           )}
           {hidden ? (

@@ -1,52 +1,11 @@
 import React, { createRef } from 'react';
-import { BiTrash } from 'react-icons/bi';
 
 import Source from './Source';
 import BlockOutput from './Output';
+import BlockControls from './BlockControls';
 import ToggleVisibilityBar from './ToggleVisibilityBar';
 
 import './scss/Block.scss';
-import './scss/BlockControls.scss';
-
-const BlockControls = React.memo(function BlockControls(props) {
-  const { deletable, onMove, onInsert, onDelete } = props;
-  return (
-    <div className="block-controls">
-      {/* Cell move button(s) */}
-      <button className="block-up-btn block-btn" onClick={() => onMove(-1)}>
-        ↑
-      </button>
-      <button className="block-down-btn block-btn" onClick={() => onMove(1)}>
-        ↓
-      </button>
-
-      {/* Cell insert button(s) */}
-      <button
-        className="block-insert-up-btn block-btn"
-        onClick={() => onInsert(0)}
-      >
-        +↑
-      </button>
-      <button
-        className="block-insert-down-btn block-btn"
-        onClick={() => onInsert(1)}
-      >
-        +↓
-      </button>
-
-      {/* Delete cell button */}
-      <button
-        className="block-delete-btn block-btn"
-        onClick={() =>
-          deletable === false || deletable === undefined ? onDelete() : null
-        }
-        disabled={deletable !== true && deletable !== undefined}
-      >
-        <BiTrash />
-      </button>
-    </div>
-  );
-});
 
 export default class Block extends React.Component {
   constructor(props) {

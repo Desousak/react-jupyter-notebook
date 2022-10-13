@@ -1,6 +1,6 @@
 import React from 'react';
 import Timer from './Timer';
-import CellRunBtn from './CellRunBtn';
+import RunBtn from './RunBtn';
 import './scss/Source.scss';
 
 /* Code-cell Styling */
@@ -264,7 +264,7 @@ export default class Source extends React.PureComponent {
     ) : (
       <div className="cell-row" tabIndex="0" onKeyDown={this.onKeyCallback}>
         {/* Left side of the code editor */}
-        <CellRunBtn
+        <RunBtn
           runCallback={this.runCallback}
           codeStatus={this.state.codeStatus}
           executionCount={executionCount}
