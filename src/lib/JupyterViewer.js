@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import './scss/JupyterViewer.scss';
 
 import Block from './Block';
-import StatusBar from './StatusBar';
 import BlockBtn from './BlockBtn';
 
 // TODO: CREATE A STATUS BAR THAT ALLOWS FOR KERNEL STATUS, SWITCHING, AND SIGNALLING
@@ -114,11 +113,6 @@ class JupyterViewer extends React.Component {
   render() {
     return (
       <div className="jupyter-viewer">
-        <StatusBar
-          kernelMessenger={this.kernelMessenger}
-          addCell={(type) => this.addCell(undefined)}
-        />
-
         {this.state.cells.map((cell, index) => {
           return (
             <div
