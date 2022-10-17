@@ -1,9 +1,11 @@
-import { configureStore, applyMiddleware } from '@reduxjs/toolkit';
-import rootReducer from './cellSlice';
+import { configureStore } from '@reduxjs/toolkit';
+import notebook from './slices/notebookSlice';
 import kernelMiddleware from './kernelMiddleware';
-
+    
 const store = configureStore({
-  reducer: rootReducer,
+  reducer: {
+    notebook
+  },
   middleware: [kernelMiddleware],
 });
 

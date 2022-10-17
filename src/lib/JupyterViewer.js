@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, { func } from 'prop-types';
 import './scss/JupyterViewer.scss';
 
 import { Provider, useSelector, useDispatch } from 'react-redux';
@@ -7,44 +7,31 @@ import store from './redux/store';
 
 import Block from './Block';
 import BlockBtn from './BlockBtn';
+import { addCellName } from './Helpers';
 
 // TODO: CREATE A STATUS BAR THAT ALLOWS FOR KERNEL STATUS, SWITCHING, AND SIGNALLING
 function JupyterViewer(props) {
   const { rawIpynb, MessengerObj } = props;
   const dispatch = useDispatch();
   // Prep store connections
-  const cells = useSelector((state) => state.cells);
-  const clickCellIndex = useSelector((state) => state.clickCellIndex);
+  const cells = useSelector((state) => state.notebook.data.cells);
+  const clickCellIndex = useSelector((state) => state.notebook.clickCellIndex);
 
   // Update cells (from raw)
   useEffect(() => {
     function loadCells(ipynb) {
-      return ipynb.cells.map((cell) => {
-        if (cell && cell.metadata) {
-          // If name is invalid - regen 
-          const cellName = cell.metadata.name;
-          if (cellName === undefined || cellName.length <= 0) {
-            cell.metadata.name = genCellName();
-          }
-        }
-        return cell;
-      });
+      return { ...ipynb, cells: ipynb.cells.map((cell) => addCellName(cell)) };
     }
-    function genCellName() {
-      return Math.random(100).toString(36).slice(2);
-    }
-
     // Load the store with the needed props
-    const processedIpynb = loadCells(rawIpynb);
-    dispatch({ type: 'cells/setCells', payload: processedIpynb });
+    dispatch({ type: 'notebook/setData', payload: loadCells(rawIpynb) });
   }, [dispatch, rawIpynb]);
 
   // Update Kernel Messenger
   useEffect(() => {
-    dispatch({ type: 'cells/setKernelMessenger', payload: MessengerObj });
+    dispatch({ type: 'kernel/setKernelMessenger', payload: MessengerObj });
   }, [dispatch, MessengerObj]);
 
-  // Prep callbacks
+  // Callbacks
   function addCell(index = clickCellIndex + 1, type = 'code') {
     if (index !== undefined && index > -1 && index < cells.length + 1) {
       let newCell = {};
@@ -67,24 +54,29 @@ function JupyterViewer(props) {
           };
           break;
       }
-      // Add a cell name
-      newCell.metadata.name = this.genCellName();
-
+      newCell = addCellName(newCell);
       // Insert cell into cell array
-      dispatch({ type: 'cells/insertCell', payload: { index, cell: newCell } });
+      dispatch({
+        type: 'notebook/insertCell',
+        payload: { index, cell: newCell },
+      });
     }
   }
-
-  const moveCell = (d) =>
+  function moveCell(d) {
     dispatch({
-      type: 'cells/moveCell',
-      payload: { index: this.state.clickCellIndex, direction: d },
+      type: 'notebook/moveCell',
+      payload: { index: clickCellIndex, direction: d },
     });
-  const deleteCell = () =>
-    dispatch({ type: 'cells/removeCell', payload: clickCellIndex });
-  const updateClicked = (i) =>
-    dispatch({ type: 'cells/setClickedIndex', payload: i });
-  const insertCell = (d) => addCell(this.state.clickCellIndex + d, 'code');
+  }
+  function deleteCell() {
+    dispatch({ type: 'notebook/removeCell', payload: clickCellIndex });
+  }
+  function updateClicked(i) {
+    dispatch({ type: 'notebook/setClickedIndex', payload: i });
+  }
+  function insertCell(d) {
+    addCell(clickCellIndex + d, 'code');
+  }
 
   return (
     <div className="jupyter-viewer">
@@ -109,7 +101,7 @@ function JupyterViewer(props) {
           </div>
         );
       })}
-      <div className="add-buttons"> 
+      <div className="add-buttons">
         <BlockBtn
           text="+ Code"
           callback={() => addCell(cells.length, 'code')}

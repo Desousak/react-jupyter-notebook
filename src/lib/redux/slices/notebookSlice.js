@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import * as reducers from './cellReducers';
+import * as reducers from '../reducers/notebookReducer';
 
 /*
 Items to be placed under redux management:
@@ -9,18 +9,18 @@ Items to be placed under redux management:
 */
 
 const initState = {
-  cells: [],
+  data: { cells: [], metadata: {}, nbformat: '', nbformat_minor: '' },
   clickCellIndex: -1,
   KernelMessenger: null,
 };
 
-const cellSlice = createSlice({
-  name: 'cells',
+const notebookSlice = createSlice({
+  name: 'notebook',
   initialState: initState,
   reducers: reducers,
 });
 
-const { actions, reducer } = cellSlice;
+const { actions, reducer } = notebookSlice;
 // TODO: REPLACE!
 export const test = actions;
 export default reducer;
