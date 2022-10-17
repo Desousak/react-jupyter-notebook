@@ -1,63 +1,52 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './scss/JupyterViewer.scss';
+
+import { Provider, useSelector, useDispatch } from 'react-redux';
+import store from './redux/store';
 
 import Block from './Block';
 import BlockBtn from './BlockBtn';
 
 // TODO: CREATE A STATUS BAR THAT ALLOWS FOR KERNEL STATUS, SWITCHING, AND SIGNALLING
-class JupyterViewer extends React.Component {
-  constructor(props) {
-    super(props);
-    const { rawIpynb, MessengerObj } = props;
-    const processedIpynb = this.loadCells(rawIpynb);
-    this.state = {
-      clickCellIndex: -1,
-      cells: processedIpynb,
-    };
-    // TODO: LOOK TOWARDS A BETTER WAY OF SHARING THE MESSENGER OTHER THAN PROP-DRILLING
-    this.kernelMessenger = new MessengerObj();
+function JupyterViewer(props) {
+  const { rawIpynb, MessengerObj } = props;
+  const dispatch = useDispatch();
+  // Prep store connections
+  const cells = useSelector((state) => state.cells);
+  const clickCellIndex = useSelector((state) => state.clickCellIndex);
 
-    // Prep callbacks to prevent re-renders
-    this.moveCellCallback = (d) => this.moveCell(this.state.clickCellIndex, d);
-    this.deleteCellCallback = (d) =>
-      this.deleteCell(this.state.clickCellIndex, d);
-    this.insertCellCallback = (d) =>
-      this.addCell(this.state.clickCellIndex + d, 'code');
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    // Update if a new ipynb is loaded
-    if (prevProps.rawIpynb !== this.props.rawIpynb) {
-      const newCells = this.loadCells(this.props.rawIpynb);
-      this.setState({ cells: newCells });
-    }
-  }
-
-  // Cell functions
-  loadCells(ipynb) {
-    return ipynb.cells.map((cell) => {
-      if (cell && cell.metadata) {
-        // If name is invalid - regen
-        const cellName = cell.metadata.name;
-        if (cellName === undefined || cellName.length > 0) {
-          cell.metadata.name = this.genCellName();
+  // Update cells (from raw)
+  useEffect(() => {
+    function loadCells(ipynb) {
+      return ipynb.cells.map((cell) => {
+        if (cell && cell.metadata) {
+          // If name is invalid - regen 
+          const cellName = cell.metadata.name;
+          if (cellName === undefined || cellName.length <= 0) {
+            cell.metadata.name = genCellName();
+          }
         }
-      }
-      return cell;
-    });
-  }
+        return cell;
+      });
+    }
+    function genCellName() {
+      return Math.random(100).toString(36).slice(2);
+    }
 
-  genCellName() {
-    return Math.random(100).toString(36).slice(2);
-  }
+    // Load the store with the needed props
+    const processedIpynb = loadCells(rawIpynb);
+    dispatch({ type: 'cells/setCells', payload: processedIpynb });
+  }, [dispatch, rawIpynb]);
 
-  addCell(index = this.state.clickCellIndex + 1, type = 'code') {
-    if (
-      index !== undefined &&
-      index > -1 &&
-      index < this.state.cells.length + 1
-    ) {
+  // Update Kernel Messenger
+  useEffect(() => {
+    dispatch({ type: 'cells/setKernelMessenger', payload: MessengerObj });
+  }, [dispatch, MessengerObj]);
+
+  // Prep callbacks
+  function addCell(index = clickCellIndex + 1, type = 'code') {
+    if (index !== undefined && index > -1 && index < cells.length + 1) {
       let newCell = {};
       switch (type) {
         default:
@@ -82,74 +71,56 @@ class JupyterViewer extends React.Component {
       newCell.metadata.name = this.genCellName();
 
       // Insert cell into cell array
-      let newCells = [...this.state.cells];
-      newCells.splice(index, 0, newCell);
-      this.setState({ cells: newCells, clickCellIndex: index });
+      dispatch({ type: 'cells/insertCell', payload: { index, cell: newCell } });
     }
   }
 
-  deleteCell(index = -1) {
-    if (index >= 0 && index < this.state.cells.length) {
-      const { cells } = this.state;
-      const newCells = cells.filter((c, i) => i !== index);
-      this.setState({ cells: newCells });
-    }
-  }
+  const moveCell = (d) =>
+    dispatch({
+      type: 'cells/moveCell',
+      payload: { index: this.state.clickCellIndex, direction: d },
+    });
+  const deleteCell = () =>
+    dispatch({ type: 'cells/removeCell', payload: clickCellIndex });
+  const updateClicked = (i) =>
+    dispatch({ type: 'cells/setClickedIndex', payload: i });
+  const insertCell = (d) => addCell(this.state.clickCellIndex + d, 'code');
 
-  moveCell(index = -1, direction) {
-    // Swaps two cells and highlights the moved cell
-    const newIndex = index !== -1 ? index + direction : -1;
-
-    if (newIndex >= 0 && newIndex < this.state.cells.length) {
-      let newCells = [...this.state.cells];
-      let tmpCell = newCells[index];
-
-      newCells[index] = newCells[newIndex];
-      newCells[newIndex] = tmpCell;
-      this.setState({ cells: newCells, clickCellIndex: newIndex });
-    }
-  }
-
-  render() {
-    return (
-      <div className="jupyter-viewer">
-        {this.state.cells.map((cell, index) => {
-          return (
-            <div
-              key={cell.metadata.name}
-              className="block"
-              onMouseDown={() =>
-                this.state.clickCellIndex !== index
-                  ? this.setState({ clickCellIndex: index })
-                  : null
-              }
-            >
-              {!('cell_type' in cell) ? null : (
-                <Block
-                  cell={cell}
-                  moveCell={this.moveCellCallback}
-                  deleteCell={this.deleteCellCallback}
-                  insertCell={this.insertCellCallback}
-                  kernelMessenger={this.kernelMessenger}
-                  highlighted={this.state.clickCellIndex === index}
-                />
-              )}
-            </div>
-          );
-        })}
-        <div className="add-buttons">
-          <BlockBtn
-            text="+ Code"
-            callback={() => this.addCell(this.state.cells.length, 'code')}
-          />
-          <BlockBtn
-            text="+ Markdown"
-            callback={() => this.addCell(this.state.cells.length, 'markdown')}
-          />
-        </div>
+  return (
+    <div className="jupyter-viewer">
+      {cells.map((cell, index) => {
+        return (
+          <div
+            key={cell.metadata.name}
+            className="block"
+            onMouseDown={() =>
+              clickCellIndex !== index ? updateClicked(index) : null
+            }
+          >
+            {!('cell_type' in cell) ? null : (
+              <Block
+                cell={cell}
+                moveCell={moveCell}
+                deleteCell={deleteCell}
+                insertCell={insertCell}
+                highlighted={clickCellIndex === index}
+              />
+            )}
+          </div>
+        );
+      })}
+      <div className="add-buttons"> 
+        <BlockBtn
+          text="+ Code"
+          callback={() => addCell(cells.length, 'code')}
+        />
+        <BlockBtn
+          text="+ Markdown"
+          callback={() => addCell(cells.length, 'markdown')}
+        />
       </div>
-    );
-  }
+    </div>
+  );
 }
 
 class DefaultKernelMessenger {
@@ -204,6 +175,14 @@ class DefaultKernelMessenger {
   }
 }
 
+function ReduxWrap(props) {
+  return (
+    <Provider store={store}>
+      <JupyterViewer {...props} />{' '}
+    </Provider>
+  );
+}
+
 JupyterViewer.defaultProps = {
   rawIpynb: { cells: [] },
   MessengerObj: DefaultKernelMessenger,
@@ -214,4 +193,4 @@ JupyterViewer.propTypes = {
   MessengerObj: PropTypes.func,
 };
 
-export { JupyterViewer, DefaultKernelMessenger };
+export { ReduxWrap as JupyterViewer, DefaultKernelMessenger };
