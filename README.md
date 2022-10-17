@@ -79,7 +79,6 @@ ReactDOM.render(
 - [ &nbsp; ] Customizable code block styling
 - [ &nbsp; ] Reimplement customizable styles
 - [ &nbsp; ] Customizable output cutoff thresholds
-- [ &nbsp; ] Status bar for switching kernels, signalling the kernel, etc.
 - [ &nbsp; ] Support for more ascii values in output (other than `\b` and `\r`)
 - [ &nbsp; ] Make rapid execution output updates faster (through memoization?)
 - [ &nbsp; ] Fix vertical scaling of code cells & output (add mobile support?)
