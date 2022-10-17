@@ -10,6 +10,33 @@ export default class ExampleMessenger extends DefaultKernelMessenger {
     this.timeout = null;
   }
 
+  get kernelInfo() {
+    return Promise.resolve({
+      implementation: 'Example',
+      implementation_version: 'N/A',
+      language_info: {
+        codemirror_mode: {
+          name: 'N/A',
+          version: -1,
+        },
+        file_extension: 'N/A',
+        mimetype: 'N/A',
+        name: 'N/A',
+        nbconvert_exporter: 'N/A',
+        pygments_lexer: 'N/A',
+        version: '1.0',
+      },
+      protocol_version: 'N/A',
+      status: 'ok',
+      banner: 'Example Messenger: An example of the messaging framework.',
+      help_links: [],
+    });
+  }
+
+  get connected() {
+    return true;
+  }
+
   runCode(code, callbackFunc) {
     const sendResponse = () => {
       // Signal our "kernel" is busy
@@ -62,9 +89,5 @@ export default class ExampleMessenger extends DefaultKernelMessenger {
   signalKernel(signal) {
     // Return whether the execution worked or not
     return false;
-  }
-
-  connected() {
-    return true;
   }
 }

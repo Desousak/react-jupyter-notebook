@@ -46,20 +46,15 @@ export default class Source extends React.PureComponent {
   // Code Execution
   // %%%%%%%%%%%%
   run(code) {
-    if (this.kernelMessenger.connected()) {
-      if (this.state.codeStatus <= 0) {
-        // Reset source but keep output for now - will be reset later
-        this.resetSource(false, null, { codeStatus: 1 }, () =>
-          this.kernelMessenger.runCode(code, this.parseResponse.bind(this))
-        );
-      } else {
-        // Stop execution
-        if (this.kernelMessenger.signalKernel(2))
-          this.setState({ codeStatus: -2 });
-      }
+    if (this.state.codeStatus <= 0) {
+      // Reset source but keep output for now - will be reset later
+      this.resetSource(false, null, { codeStatus: 1 }, () =>
+        this.kernelMessenger.runCode(code, this.parseResponse.bind(this))
+      );
     } else {
-      // TODO: Implement better error message when not connected to a kernel!
-      alert('Kernel not connected!');
+      // Stop execution
+      if (this.kernelMessenger.signalKernel(2))
+        this.setState({ codeStatus: -2 });
     }
   }
 
@@ -203,7 +198,8 @@ export default class Source extends React.PureComponent {
       case 'code':
         this.runCallback = (_) => this.run(this.source);
         highlightType = languages.py;
-        executionCount = (this.executionCount !== null) ? this.executionCount : " ";
+        executionCount =
+          this.executionCount !== null ? this.executionCount : ' ';
         break;
       case 'markdown':
         this.runCallback = () => this.setState({ showMarkdown: true });

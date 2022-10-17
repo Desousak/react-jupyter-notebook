@@ -164,8 +164,12 @@ class DefaultKernelMessenger {
     // Init connection here
     // Constructor is not passed any parameters, set them here instead
   }
+  get ready() {
+    // Returns a promise which resolves when the kernel loads in initially
+    return Promise.resolve();
+  }
 
-  kernelInfo() {
+  get kernelInfo() {
     // Return a promise containing info about the kernel
     return Promise.resolve({
       status: 'ok',
@@ -187,6 +191,11 @@ class DefaultKernelMessenger {
     });
   }
 
+  get connected() {
+    // Returns true if connected, false otherwise
+    return false;
+  }
+
   // %%%%%%%%%%%%%%%%%%%%%%
   // Code-Cell Interactions
   // Functions here MUST be implemented
@@ -197,11 +206,6 @@ class DefaultKernelMessenger {
 
   signalKernel(signal) {
     // Returns true if successful, false otherwise
-    return false;
-  }
-
-  connected() {
-    // Returns true if connected, false otherwise
     return false;
   }
 }

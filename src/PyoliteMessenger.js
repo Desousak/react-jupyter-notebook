@@ -43,16 +43,16 @@ export default class PyoliteMessenger extends DefaultKernelMessenger {
     });
   }
 
-  ready() {
+  get kernelInfo() {
+    return this.#kernel.kernelInfoRequest();
+  }
+
+  get ready() {
     return this.#kernel.ready;
   }
 
-  connected() {
+  get connected() {
     return this.#kernelReady === true;
-  }
-
-  kernelInfo() {
-    return this.#kernel.kernelInfoRequest();
   }
 
   runCode(code, callback) {
