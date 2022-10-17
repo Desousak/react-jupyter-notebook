@@ -17,6 +17,7 @@ function App(props) {
           display: 'flex',
           gap: '1rem',
           alignItems: 'center',
+          marginBottom: '1rem'
         }}
       >
         <span>Load .ipynb file:</span>
