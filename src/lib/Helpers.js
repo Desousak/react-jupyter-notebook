@@ -15,4 +15,33 @@ function addCellName(cell) {
   return cell;
 }
 
-export { setCharAt, addCellName };
+function addCell(dispatch, index, type = 'code') {
+  let newCell = {};
+  switch (type) {
+    default:
+    case 'code':
+      newCell = {
+        cell_type: type,
+        execution_count: null,
+        metadata: {},
+        source: [],
+        outputs: [],
+      };
+      break;
+    case 'markdown':
+      newCell = {
+        cell_type: type,
+        metadata: {},
+        source: [],
+      };
+      break;
+  }
+  newCell = addCellName(newCell);
+  // Insert cell into cell array
+  dispatch({
+    type: 'notebook/insertCell',
+    payload: { index, cell: newCell },
+  });
+}
+
+export { setCharAt, addCellName, addCell };

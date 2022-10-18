@@ -56,7 +56,7 @@ export default class PyoliteMessenger extends DefaultKernelMessenger {
   }
 
   runCode(code, callback) {
-    if (this.connected()) {
+    if (this.connected) {
       this.#runQueue.push({ code, callback });
       if (this.#runQueue.length === 1) {
         // First in queue - run your code

@@ -42,7 +42,7 @@ function App(props) {
       {!state.rawIpynb ? null : (
         <JupyterViewer
           rawIpynb={state.rawIpynb}
-          MessengerObj={ExampleMessenger}
+          MessengerObj={PyoliteMessenger}
         />
       )}
     </React.Fragment>
