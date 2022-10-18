@@ -10,7 +10,6 @@ Items to be placed under redux management:
 
 const initState = {
   data: { cells: [], metadata: {}, nbformat: '', nbformat_minor: '' },
-  clickCellIndex: -1,
   KernelMessenger: null,
 };
 

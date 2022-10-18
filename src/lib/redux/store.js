@@ -1,12 +1,12 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import ui from './slices/uiSlice';
 import notebook from './slices/notebookSlice';
-import kernelMiddleware from './kernelMiddleware';
-    
+
 const store = configureStore({
   reducer: {
-    notebook
+    notebook,
+    ui,
   },
-  middleware: [kernelMiddleware],
 });
 
 export default store;

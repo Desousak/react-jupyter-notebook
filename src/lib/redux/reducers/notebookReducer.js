@@ -1,14 +1,55 @@
-function setClickedIndex(state, action) {
-  state.clickCellIndex = action.payload;
-}
-
+// Initial load
 function setData(state, action) {
   state.data = action.payload;
 }
 
-function insertCell(state, action) {
+// Single cell management 
+function updateCell(state, action) {
   const { index, cell } = action.payload;
-  if (index !== undefined && index > -1 && index < state.data.cells.length + 1) {
+  if (index >= 0 && index < state.data.cells.length) {
+    state.data.cells[index] = { ...state.data.cells[index], ...cell };
+  }
+}
+
+function changeCellVisibility(state, action) {
+  const { index, target, value } = action.payload;
+
+  if (index >= 0 && index < state.data.cells.length) {
+    const cell = state.data.cells[index];
+    if (!cell.metadata.jupyter) cell.metadata.jupyter = {};
+
+    switch (target) {
+      case 'outputs_hidden':
+        cell.metadata['collapsed'] = false;
+      // Fall through
+      case 'source_hidden':
+        cell.metadata.jupyter[target] = value;
+        break;
+      case 'collapsed':
+        cell.metadata.jupyter['outputs_hidden'] = false;
+        cell.metadata[target] = value;
+        break;
+      default:
+    }
+  }
+}
+
+function addOutput(state, action) {
+  const { index, output } = action.payload;
+  if (index >= 0 && index < state.data.cells.length) {
+    state.data.cells[index].outputs.push(output);
+  }
+}
+
+// Multi-cell management 
+function insertCell(state, action) {
+  console.log("here...");
+  const { index, cell } = action.payload;
+  if (
+    index !== undefined &&
+    index > -1 &&
+    index < state.data.cells.length + 1
+  ) {
     // Insert cell into cell array
     let newCells = [...state.data.cells];
     newCells.splice(index, 0, cell);
@@ -42,4 +83,12 @@ function moveCell(state, action) {
   }
 }
 
-export { setClickedIndex, setData, insertCell, removeCell, moveCell };
+export {
+  setData,
+  updateCell,
+  changeCellVisibility,
+  addOutput,
+  insertCell,
+  removeCell,
+  moveCell,
+};
