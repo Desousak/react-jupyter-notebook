@@ -1,10 +1,10 @@
-import { DefaultKernelMessenger } from './lib/JupyterViewer';
+import { KernelMessenger } from './lib/JupyterViewer';
 
 function delay(time) {
   return new Promise((res, rej) => setTimeout(res, time));
 }
 
-export default class ExampleMessenger extends DefaultKernelMessenger {
+export default class ExampleMessenger extends KernelMessenger {
   constructor() {
     super();
     this.timeout = null;

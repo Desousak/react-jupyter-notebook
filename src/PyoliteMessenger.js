@@ -1,7 +1,7 @@
-import { DefaultKernelMessenger } from './lib/JupyterViewer';
+import { KernelMessenger } from './lib/JupyterViewer';
 import { PyoliteKernel } from './pyolite-kernel/pyoliteKernel.ts';
 
-export default class PyoliteMessenger extends DefaultKernelMessenger {
+export default class PyoliteMessenger extends KernelMessenger {
   #kernelReady = false;
   #runQueue = [];
   #kernel = null;
