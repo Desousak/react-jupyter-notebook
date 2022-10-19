@@ -43,7 +43,6 @@ function addOutput(state, action) {
 
 // Multi-cell management 
 function insertCell(state, action) {
-  console.log("here...");
   const { index, cell } = action.payload;
   if (
     index !== undefined &&

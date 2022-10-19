@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import Timer from './Timer';
 import RunBtn from './RunBtn';
-import { messengerProxy } from './MessengerProxy.js';
+import kernelMessenger from './MessengerProxy.js';
 
 import './scss/Source.scss';
 
@@ -18,7 +18,7 @@ import RemarkMath from 'remark-math';
 import RehypeKatex from 'rehype-katex';
 import ReactMarkdown from 'react-markdown';
 
-export default function Source(props) {
+function Source(props) {
   // Parse cell
   const { cellIndex } = props;
   const cell = useSelector((state) => state.notebook.data.cells[cellIndex]);
@@ -51,10 +51,10 @@ export default function Source(props) {
       // Reset source but keep output for now - will be reset later
       updateCell({ execution_count: null });
       setCodeStatus(1);
-      messengerProxy.runCode(code, parseResponse);
+      kernelMessenger.runCode(code, parseResponse);
     } else {
       // Stop execution
-      if (messengerProxy.signalKernel(2)) setCodeStatus(-2);
+      if (kernelMessenger.signalKernel(2)) setCodeStatus(-2);
     }
   }
 
@@ -73,7 +73,7 @@ export default function Source(props) {
           if (codeStatus !== -2) {
             if (kernelBusy) {
               // Clear the output only when we get response from the kernel
-              updateCell({outputs: []});
+              updateCell({ outputs: [] });
               setCodeStatus(2);
             } else if (executionCount === null) {
               // TODO: Investigate if this causes bugs
@@ -107,7 +107,7 @@ export default function Source(props) {
           });
           break;
         case 'shutdown_reply':
-          updateCell({output: []});
+          updateCell({ output: [] });
           setCodeStatus(-2);
           break;
         default:
@@ -118,10 +118,13 @@ export default function Source(props) {
   function toggleLang() {
     // Stop any on-going execution
     let signalStatus = true;
-    if (codeStatus > 0) signalStatus = messengerProxy.signalKernel(2);
+    if (codeStatus > 0) signalStatus = kernelMessenger.signalKernel(2);
     if (signalStatus) {
       setCodeStatus(-1);
-      updateCell({output: [], cell_type: cellType === 'code' ? 'markdown' : 'code' });
+      updateCell({
+        output: [],
+        cell_type: cellType === 'code' ? 'markdown' : 'code',
+      });
     }
   }
 
@@ -222,14 +225,16 @@ export default function Source(props) {
     <div className="cell-row" tabIndex="0" onKeyDown={keyCallback}>
       {/* Left side of the code editor */}
       <RunBtn
-        runCallback={runCallback}
         codeStatus={codeStatus}
-        executionCount={executionCount !== null ? executionCount : ' '}
+        runCallback={runCallback}
         showMarkdown={showMarkdown}
         isMarkdownCell={cellType === 'markdown'}
+        executionCount={executionCount !== null ? executionCount : ' '}
       />
       {/* Code itself (or markdown) */}
       {cellContent}
     </div>
   );
 }
+
+export default React.memo(Source);

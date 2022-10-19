@@ -1,8 +1,10 @@
+// Replace character at index
 function setCharAt(str, index, chr) {
   if (index > str.length - 1) return chr;
   return str.substring(0, index) + chr + str.substring(index + 1);
 }
 
+// Generate cell name if needed
 function addCellName(cell) {
   if (cell) {
     if (!cell.metadata) cell.metadata = {};
@@ -15,6 +17,7 @@ function addCellName(cell) {
   return cell;
 }
 
+// Generate a cell and add to store
 function addCell(dispatch, index, type = 'code') {
   let newCell = {};
   switch (type) {

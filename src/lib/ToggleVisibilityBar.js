@@ -4,14 +4,11 @@ import './scss/ToggleVisibilityBar.scss';
 
 function ToggleVisibilityBar(props) {
   const { target, cellIndex } = props;
-
   const dispatch = useDispatch();
   const { metadata } = useSelector(
     (state) => state.notebook.data.cells[cellIndex]
   );
-  const clickCellIndex = useSelector((state) => state.ui.clickCellIndex);
-
-  const highlighted = clickCellIndex === cellIndex;
+  const highlighted = useSelector((state) => state.ui.clickCellIndex === cellIndex);
   const { jupyter } = metadata;
 
   function toggleVisibility() {
