@@ -228,7 +228,7 @@ function Output(props) {
               // Output without execution_count
               // eslint-disable-next-line no-fallthrough
               case 'display_data':
-                let output_data = output['data'],
+                let output_data = { ...output['data'] },
                   outputDataKey = Object.keys(output_data)[0];
                 // Can sometimes be sent as string??
                 if (typeof output_data[outputDataKey] === 'string')
