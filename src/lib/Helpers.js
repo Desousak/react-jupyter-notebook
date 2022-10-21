@@ -5,7 +5,7 @@ function setCharAt(str, index, chr) {
 }
 
 // Generate cell name if needed
-function addCellName(cell) {
+function genCellName(cell) {
   if (cell) {
     if (!cell.metadata) cell.metadata = {};
     // If name is invalid - regen
@@ -17,8 +17,8 @@ function addCellName(cell) {
   return cell;
 }
 
-// Generate a cell and add to store
-function addCell(dispatch, index, type = 'code') {
+// Generate a cell 
+function genCell(type) {
   let newCell = {};
   switch (type) {
     default:
@@ -39,12 +39,37 @@ function addCell(dispatch, index, type = 'code') {
       };
       break;
   }
-  newCell = addCellName(newCell);
-  // Insert cell into cell array
+  return genCellName(newCell);
+}
+
+// Insert cell into cell store
+function addCell(dispatch, index, type = 'code') {
+  
   dispatch({
     type: 'notebook/insertCell',
-    payload: { index, cell: newCell },
+    payload: { index, cell: genCell(type) },
   });
 }
 
-export { setCharAt, addCellName, addCell };
+// Insert cell offset by current index
+function offsetAddCell(dispatch, offset, type) {
+  dispatch({
+    type: 'notebook/insertOffsetCell',
+    payload: { offset, cell: genCell(type) },
+  });
+}
+
+// Move two cells
+function moveCell(dispatch, direction, index = null) {
+  dispatch({
+    type: 'notebook/moveCell',
+    payload: { index, direction },
+  });
+}
+
+// Delete a cell
+function deleteCell(dispatch, index = null) {
+  dispatch({ type: 'notebook/removeCell', payload: index });
+}
+
+export { setCharAt, genCellName, addCell, offsetAddCell, moveCell, deleteCell };

@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import store from './redux/store';
 import PropTypes from 'prop-types';
 
 import Block from './Block';
 import BlockBtn from './BlockBtn';
-import { addCellName, addCell } from './Helpers';
+import { genCellName, addCell } from './Helpers';
 import { buildMessengerProxy } from './MessengerProxy';
 import KernelMessenger from './KernelMessenger';
 
@@ -15,16 +15,15 @@ function JupyterViewer(props) {
   const { rawIpynb, MessengerObj } = props;
   const dispatch = useDispatch();
   const cells = useSelector((state) => state.notebook.data.cells);
-  const clickCellIndex = useRef(-1);
+  const clickCellIndex = useSelector((state) => state.notebook.clickCellIndex);
 
   // Update clicked cell
   const updateCellIndex = useCallback(
     (i) => {
       dispatch({
-        type: 'ui/setClickedCell',
+        type: 'notebook/setClickedCell',
         payload: i,
       });
-      clickCellIndex.current = i;
     },
     [dispatch]
   );
@@ -32,7 +31,7 @@ function JupyterViewer(props) {
   // Update cells (from raw)
   useEffect(() => {
     const loadCells = (ipynb) => {
-      return { ...ipynb, cells: ipynb.cells.map((cell) => addCellName(cell)) };
+      return { ...ipynb, cells: ipynb.cells.map((cell) => genCellName(cell)) };
     };
     const processed = loadCells(rawIpynb);
 

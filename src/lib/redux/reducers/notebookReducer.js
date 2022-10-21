@@ -3,7 +3,7 @@ function setData(state, action) {
   state.data = action.payload;
 }
 
-// Single cell management 
+// Single cell management
 function updateCell(state, action) {
   const { index, cell } = action.payload;
   if (index >= 0 && index < state.data.cells.length) {
@@ -41,7 +41,7 @@ function addOutput(state, action) {
   }
 }
 
-// Multi-cell management 
+// Multi-cell management
 function insertCell(state, action) {
   const { index, cell } = action.payload;
   if (
@@ -53,22 +53,34 @@ function insertCell(state, action) {
     let newCells = [...state.data.cells];
     newCells.splice(index, 0, cell);
     state.data.cells = newCells;
-    state.clickCellIndex = index;
+
+    setClickedCell(state, { payload: index });
   }
 }
 
+function insertOffsetCell(state, action) {
+  const { offset, cell } = action.payload;
+  const index = state.clickCellIndex + offset;
+  insertCell(state, { payload: { index, cell } });
+}
+
 function removeCell(state, action) {
-  const index = action.payload;
+  // const index = action.payload;
+  const index = action.payload ? action.payload : state.clickCellIndex;
   if (index >= 0 && index < state.data.cells.length) {
     const { cells } = state.data;
     const newCells = cells.filter((c, i) => i !== index);
     state.data.cells = newCells;
+    setClickedCell(state, { payload: -1 });
   }
 }
 
 function moveCell(state, action) {
   // Swaps two cells and highlights the moved cell
-  const { index, direction } = action.payload;
+  const direction = action.payload.direction;
+  const index = action.payload.index
+    ? action.payload.index
+    : state.clickCellIndex;
   const newIndex = index !== -1 ? index + direction : -1;
 
   if (newIndex >= 0 && newIndex < state.data.cells.length) {
@@ -79,7 +91,14 @@ function moveCell(state, action) {
     newCells[newIndex] = tmpCell;
     state.data.cells = newCells;
     state.clickCellIndex = newIndex;
+
+    // Update active cell
+    setClickedCell(state, { payload: newIndex });
   }
+}
+
+function setClickedCell(state, action) {
+  state.clickCellIndex = action.payload;
 }
 
 export {
@@ -88,6 +107,8 @@ export {
   changeCellVisibility,
   addOutput,
   insertCell,
+  insertOffsetCell,
   removeCell,
   moveCell,
+  setClickedCell,
 };

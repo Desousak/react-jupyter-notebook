@@ -1,11 +1,9 @@
-import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import ui from './slices/uiSlice';
+import { configureStore } from '@reduxjs/toolkit';
 import notebook from './slices/notebookSlice';
 
 const store = configureStore({
   reducer: {
     notebook,
-    ui,
   },
 });
 

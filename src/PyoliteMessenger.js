@@ -62,7 +62,9 @@ export default class PyoliteMessenger extends KernelMessenger {
         // First in queue - run your code
         this.#execute(code);
       }
+      return true;
     }
+    return false;
   }
 
   signalKernel(signal) {

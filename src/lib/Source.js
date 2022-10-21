@@ -1,4 +1,11 @@
-import React, { useState } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+// Exhaustive deps check is disabled because functions 
+// referenced are 'safe' since they are in the same component.
+
+// Also, we only want the callback to update once - but adding the
+// functions to the deps would cause re-renders.
+
+import React, { useCallback, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import Timer from './Timer';
@@ -51,7 +58,8 @@ function Source(props) {
       // Reset source but keep output for now - will be reset later
       updateCell({ execution_count: null });
       setCodeStatus(1);
-      kernelMessenger.runCode(code, parseResponse);
+      const execStatus = kernelMessenger.runCode(code, parseResponse);
+      if (!execStatus) setCodeStatus(-1);
     } else {
       // Stop execution
       if (kernelMessenger.signalKernel(2)) setCodeStatus(-2);
@@ -128,20 +136,20 @@ function Source(props) {
     }
   }
 
-  function updateContent(code) {
-    // Store the changes to the content
-    // Done so that we can restore it if the cell is hidden
-    updateCell({ ...cell, source: code.split(/^/m) });
-  }
+  // Callbacks passed into children
+  const updateContent = useCallback(
+    (code) => updateCell({ ...cell, source: code.split(/^/m) }),
+    []
+  );
 
-  function keyCallback(e) {
+  const keyCallback = useCallback((e) => {
     // If shift-enter - call the callback
     if (e.shiftKey && e.which === 13) {
       runCallback(source);
       e.preventDefault();
       e.stopPropagation();
     }
-  }
+  }, []);
 
   function preProcessMarkdown(text) {
     const fixMath = (text) => {
@@ -218,7 +226,7 @@ function Source(props) {
     );
   }
 
-  // console.log(`Source ${cellIndex} re-rendered!`);
+  // TODO: Look into TextEditor & RunBtn for un-needed renders
   return shown === 0 ? (
     <div className="source-hidden" />
   ) : (

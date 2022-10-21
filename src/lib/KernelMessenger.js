@@ -42,6 +42,8 @@ export default class KernelMessenger {
   // %%%%%%%%%%%%%%%%%%%%%%
   runCode(code, callback) {
     // Run the code
+    // Returns true if connection is made, false otherwise
+    return false;
   }
 
   signalKernel(signal) {

@@ -1,16 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
 import * as reducers from '../reducers/notebookReducer';
 
-/*
-Items to be placed under redux management:
-- Cells (and everything contained: i.e. source & output updates)
-- KernelMessenger ?
-- Cell Clicked Index
-*/
-
 const initState = {
   data: { cells: [], metadata: {}, nbformat: '', nbformat_minor: '' },
-  KernelMessenger: null,
+  clickCellIndex: -1,
 };
 
 const notebookSlice = createSlice({
@@ -19,7 +12,5 @@ const notebookSlice = createSlice({
   reducers: reducers,
 });
 
-const { actions, reducer } = notebookSlice;
-// TODO: REPLACE!
-export const test = actions;
-export default reducer;
+export const { actions } = notebookSlice;
+export default notebookSlice.reducer;
