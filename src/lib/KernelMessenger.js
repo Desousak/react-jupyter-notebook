@@ -42,12 +42,12 @@ export default class KernelMessenger {
   // %%%%%%%%%%%%%%%%%%%%%%
   runCode(code, callback) {
     // Run the code
-    // Returns true if connection is made, false otherwise
-    return false;
+    // Returns a promise which resolves once execution is completed
+    return new Promise();
   }
 
   signalKernel(signal) {
-    // Returns true if successful, false otherwise
-    return false;
+    // Returns a promise which resolves if signalling was successful
+    return new Promise();
   }
 }

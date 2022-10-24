@@ -5,7 +5,7 @@
 
     display: flex;
     flex-direction: row;
-    position: relative;
+    position: relative; // MIGHT CAUSE SAFARI ISSUES!
 
     .source-code-main,
     .cell-status {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import Editor from 'react-simple-code-editor';
 
 import './scss/TextEditor.scss';
@@ -13,27 +13,32 @@ function TextEditor(props) {
   const { className, onChange, onKeyDown, onInput, disabled, highlightType } =
     props;
 
-  // TODO: Prevent unneeded Editor renders
+  const onValueChange = useCallback(
+    (code) => {
+      setCode(code);
+      onChange(code);
+    },
+    [setCode, onChange]
+  );
+  const highlightWrapper = useCallback(
+    (code) =>
+      highlight(code, highlightType)
+        .split('\n')
+        .map((line, i) => `<span class='editor-linenum'>${i + 1}</span>${line}`)
+        .join('\n'),
+    [highlightType]
+  );
+
   return (
     <Editor
       className={className}
       textareaClassName="editor-textarea"
       value={code}
-      onValueChange={(code) => {
-        setCode(code);
-        onChange(code);
-      }}
+      onValueChange={onValueChange}
       onKeyDown={onKeyDown}
       onInput={onInput}
       disabled={disabled}
-      highlight={(code) =>
-        highlight(code, highlightType)
-          .split('\n')
-          .map(
-            (line, i) => `<span class='editor-linenum'>${i + 1}</span>${line}`
-          )
-          .join('\n')
-      }
+      highlight={highlightWrapper}
       padding={'1rem'}
     />
   );
@@ -49,4 +54,4 @@ TextEditor.defaultProps = {
   highlightType: (code) => code,
 };
 
-export default TextEditor;
+export default React.memo(TextEditor);

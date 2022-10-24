@@ -25,23 +25,55 @@ npm install --save https://github.com/Desousak/react-jupyter-notebook.git
 ```javascript
 // If you want code execution capabilities - you must provide your own connection code
 // For example:
-import { DefaultKernelMessenger } from 'react-jupyter-notebook';
+import { KernelMessenger } from 'react-jupyter-notebook';
 
-class ExampleMessenger extends DefaultKernelMessenger {
+class ExampleMessenger extends KernelMessenger {
   constructor() {
     // Init connection here
     // Constructor is not passed any parameters
   }
 
-  runCode(code, callbackFunc) {
-    // Run the code
-    // Returns true if successful and adds the cell to the execution queue (via callbackFunc), false otherwise
+  get ready() {
+    // Returns a promise which resolves when the kernel loads in initially
+    return Promise.resolve();
+  }
+
+  get kernelInfo() {
+    // Return a promise containing info about the kernel
+    return Promise.resolve({
+      status: 'ok',
+      protocol_version: 'X.Y.Z',
+      implementation: '',
+      implementation_version: 'X.Y.Z',
+      language_info: {
+        name: '',
+        version: 'X.Y.Z',
+        mimetype: '',
+        file_extension: '',
+        pygments_lexer: '',
+        codemirror_mode: '',
+        nbconvert_exporter: '',
+      },
+      banner: '',
+      debugger: false,
+      help_links: [{ text: '', url: '' }],
+    });
+  }
+
+  get connected() {
+    // Returns true if connected, false otherwise
     return false;
   }
 
+  runCode(code, callbackFunc) {
+    // Run the code
+    // Returns a promise which resolves once execution is completed
+    return new Promise();
+  }
+
   signalKernel(signal) {
-    // Returns true if successful, false otherwise
-    return false;
+    // Returns a promise which resolves if signalling was successful
+    return new Promise();
   }
 
   connected() {
@@ -82,7 +114,7 @@ ReactDOM.render(
 - [ &nbsp; ] Support for more ascii values in output (other than `\b` and `\r`)
 - [ &nbsp; ] Make rapid execution output updates faster (through memoization?)
 - [ &nbsp; ] Fix vertical scaling of code cells & output (add mobile support?)
-- [ &nbsp; ] Refactor such that prop-drilling isn't needed to pass along the [KernelMessenger](src/lib/JupyterViewer.js)
+- [✓] Refactor such that prop-drilling isn't needed to pass along the [KernelMessenger](src/lib/JupyterViewer.js)
 - [✓] Add a default kernel messenger that interacts with Python via WASM (with <a href="https://github.com/jupyterlite/jupyterlite">JupyterLite</a>)
 
 ## Notes

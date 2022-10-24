@@ -1,9 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-// Exhaustive deps check is disabled because functions 
-// referenced are 'safe' since they are in the same component.
-
-// Also, we only want the callback to update once - but adding the
-// functions to the deps would cause re-renders.
+// Exhaustive deps check is disabled because functions
+// such as 'run' are known not to change (ref might change but same functionality)
+// TODO: Check if all functions should be wrapped in useCallback, or reworked
 
 import React, { useCallback, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
@@ -46,23 +44,21 @@ function Source(props) {
     });
   }
 
-  // Render variables
-  let highlightType, cellContent, runCallback;
-  const shown = jupyter && jupyter.source_hidden ? 0 : 1,
-    mergedCode = source.join(''),
-    { execution_count: executionCount } = cell,
-    { editable } = metadata;
-
   function run(code) {
     if (codeStatus <= 0) {
       // Reset source but keep output for now - will be reset later
       updateCell({ execution_count: null });
       setCodeStatus(1);
-      const execStatus = kernelMessenger.runCode(code, parseResponse);
-      if (!execStatus) setCodeStatus(-1);
+      kernelMessenger
+        .runCode(code, parseResponse)
+        .then(() => {})
+        .catch(() => setCodeStatus(-2));
     } else {
       // Stop execution
-      if (kernelMessenger.signalKernel(2)) setCodeStatus(-2);
+      kernelMessenger
+        .signalKernel(2)
+        .then(() => setCodeStatus(-2))
+        .catch(() => {});
     }
   }
 
@@ -77,26 +73,18 @@ function Source(props) {
         case 'status':
           // Kernel status (usually busy or idle -> first and last messages)
           let kernelBusy = msgContent.execution_state === 'busy';
-
-          if (codeStatus !== -2) {
-            if (kernelBusy) {
-              // Clear the output only when we get response from the kernel
-              updateCell({ outputs: [] });
-              setCodeStatus(2);
-            } else if (executionCount === null) {
-              // TODO: Investigate if this causes bugs
-              // Execution suddenly ended...
-              setCodeStatus(-2);
-            } else {
-              // End of output
-              setCodeStatus(0);
-            }
+          if (kernelBusy) {
+            // Clear the output only when we get response from the kernel
+            updateCell({ outputs: [] });
+            setCodeStatus(2);
+          } else {
+            // End of output
+            setCodeStatus(0);
           }
           break;
         case 'execute_input':
           // Post-run execution count (usually second message)
           updateCell({ execution_count: msgContent.execution_count });
-          // executionCount = msgContent.execution_count;
           break;
         case 'error':
           setCodeStatus(-2);
@@ -136,21 +124,6 @@ function Source(props) {
     }
   }
 
-  // Callbacks passed into children
-  const updateContent = useCallback(
-    (code) => updateCell({ ...cell, source: code.split(/^/m) }),
-    []
-  );
-
-  const keyCallback = useCallback((e) => {
-    // If shift-enter - call the callback
-    if (e.shiftKey && e.which === 13) {
-      runCallback(source);
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }, []);
-
   function preProcessMarkdown(text) {
     const fixMath = (text) => {
       // '$$' has to be in a separate new line to be rendered as a block math equation.
@@ -173,20 +146,37 @@ function Source(props) {
     return res;
   }
 
-  // Set run-callback and execution count based on cell-type
-  switch (cellType) {
-    case 'code':
-      runCallback = (_) => run(source);
-      highlightType = languages.py;
-      break;
-    case 'markdown':
-      runCallback = () => setShowMarkdown(true);
-      break;
-    default:
-      break;
-  }
+  // Callbacks passed into children
+  const runCallback = useCallback(() => {
+    // Set run-callback and execution count based on cell-type
+    if (cellType === 'code') {
+      run(source);
+    } else {
+      setShowMarkdown(true);
+    }
+  }, [cellType, source]);
+
+  const updateContent = useCallback(
+    (code) => updateCell({ source: code.split(/^/m) }),
+    []
+  );
+
+  const keyCallback = useCallback((e) => {
+    // If shift-enter - call the callback
+    if (e.shiftKey && e.which === 13) {
+      runCallback();
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, [runCallback]);
 
   // Build either editor or rendered markdown view
+  let cellContent;
+  const shown = jupyter && jupyter.source_hidden ? 0 : 1,
+    mergedCode = source.join(''),
+    { execution_count: executionCount } = cell,
+    { editable } = metadata;
+
   if (!showMarkdown) {
     cellContent = (
       <div className="cell-content source-code">
@@ -195,9 +185,9 @@ function Source(props) {
           className="source-code-main"
           defaultValue={mergedCode}
           onChange={updateContent}
-          onKeyDown={keyCallback}
+          // onKeyDown={keyCallback}
           disabled={!(editable === undefined || editable) ? true : false}
-          highlightType={highlightType}
+          highlightType={cellType === 'code' ? languages.py : undefined}
         />
         {/* Run time and Language switcher */}
         <div className="cell-status">

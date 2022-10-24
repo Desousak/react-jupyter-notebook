@@ -36,8 +36,9 @@ export default class PyoliteMessenger extends KernelMessenger {
         code: code.join(''),
       },
     });
-    res.then((d) => {
+    res.then(() => {
       // Remove finished cell's callback & run the next code
+      this.#runQueue[0].resolve();
       this.#runQueue.shift();
       if (this.#runQueue.length > 0) this.#execute(this.#runQueue[0].code);
     });
@@ -56,19 +57,23 @@ export default class PyoliteMessenger extends KernelMessenger {
   }
 
   runCode(code, callback) {
-    if (this.connected) {
-      this.#runQueue.push({ code, callback });
-      if (this.#runQueue.length === 1) {
-        // First in queue - run your code
-        this.#execute(code);
+    console.log("RUNNING CODE!");
+    const promise = new Promise((resolve, reject) => {
+      if (this.connected) {
+        this.#runQueue.push({ code, callback, resolve, reject });
+        if (this.#runQueue.length === 1) {
+          // First in queue - run your code
+          this.#execute(code);
+        }
+      } else {
+        reject("Kernel Execute Error: Not connected");
       }
-      return true;
-    }
-    return false;
+    });
+    return promise;
   }
 
   signalKernel(signal) {
     // Return whether the execution worked or not
-    return false;
+    return Promise.reject("Kernel Signal Error: Not available");
   }
 }
