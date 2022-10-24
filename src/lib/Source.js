@@ -1,6 +1,15 @@
-import React from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+// Exhaustive deps check is disabled because functions
+// such as 'run' are known not to change (ref might change but same functionality)
+// TODO: Check if all functions should be wrapped in useCallback, or reworked
+
+import React, { useCallback, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+
 import Timer from './Timer';
 import RunBtn from './RunBtn';
+import kernelMessenger from './MessengerProxy.js';
+
 import './scss/Source.scss';
 
 /* Code-cell Styling */
@@ -14,53 +23,48 @@ import RemarkMath from 'remark-math';
 import RehypeKatex from 'rehype-katex';
 import ReactMarkdown from 'react-markdown';
 
-export default class Source extends React.PureComponent {
-  constructor(props) {
-    super(props);
-    this.state = {
-      codeStatus: -1,
-      shown: props.shown,
-      cellType: props.cellType,
-      showMarkdown: props.showMarkdown,
-    };
-    this.editable = props.editable;
-    this.executionCount = props.executionCount;
-    this.kernelMessenger = props.kernelMessenger;
-    this.source = props.source ? props.source : [];
+function Source(props) {
+  // Parse cell
+  const { cellIndex } = props;
+  const cell = useSelector((state) => state.notebook.data.cells[cellIndex]);
+  const { cell_type: cellType, metadata, source } = cell;
+  const { jupyter } = metadata;
 
-    // Callbacks
-    this.updateOutputs = props.updateOutputs;
-    this.onKeyCallback = this.keyCallback.bind(this);
-    this.onChangeCallback = this.updateContent.bind(this);
-    this.runCallback = () => console.error('Incorrect cell type!');
+  // Hooks
+  const dispatch = useDispatch();
+  const [codeStatus, setCodeStatus] = useState(-1);
+  const [showMarkdown, setShowMarkdown] = useState(
+    source.length > 0 && cellType === 'markdown' ? true : false
+  );
+
+  function updateCell(newCell) {
+    dispatch({
+      type: 'notebook/updateCell',
+      payload: { index: cellIndex, cell: newCell },
+    });
   }
 
-  componentDidUpdate() {
-    // Update visibility if needed
-    if (this.props.shown !== this.state.shown) {
-      this.setState({ shown: this.props.shown });
-    }
-  }
-
-  // %%%%%%%%%%%%
-  // Code Execution
-  // %%%%%%%%%%%%
-  run(code) {
-    if (this.state.codeStatus <= 0) {
+  function run(code) {
+    if (codeStatus <= 0) {
       // Reset source but keep output for now - will be reset later
-      this.resetSource(false, null, { codeStatus: 1 }, () =>
-        this.kernelMessenger.runCode(code, this.parseResponse.bind(this))
-      );
+      updateCell({ execution_count: null });
+      setCodeStatus(1);
+      kernelMessenger
+        .runCode(code, parseResponse)
+        .then(() => {})
+        .catch(() => setCodeStatus(-2));
     } else {
       // Stop execution
-      if (this.kernelMessenger.signalKernel(2))
-        this.setState({ codeStatus: -2 });
+      kernelMessenger
+        .signalKernel(2)
+        .then(() => setCodeStatus(-2))
+        .catch(() => {});
     }
   }
 
-  parseResponse(msg) {
+  function parseResponse(msg) {
     // Check is used to prevent running code & change of cell type race condition
-    if (this.state.cellType !== 'markdown') {
+    if (cellType !== 'markdown') {
       // Messages expected (in order of occurrence)
       const msgType = msg.header.msg_type,
         msgContent = msg.content;
@@ -69,107 +73,58 @@ export default class Source extends React.PureComponent {
         case 'status':
           // Kernel status (usually busy or idle -> first and last messages)
           let kernelBusy = msgContent.execution_state === 'busy';
-
-          if (this.state.codeStatus !== -2) {
-            if (kernelBusy) {
-              // Clear the output only when we get response from the kernel
-              this.resetSource(true, false, { codeStatus: 2 });
-            } else if (this.executionCount === null) {
-              // TODO: Investigate if this causes bugs
-              // Execution suddenly ended...
-              this.setState({ codeStatus: -2 });
-            } else {
-              // End of output
-              this.setState({ codeStatus: 0 });
-            }
+          if (kernelBusy) {
+            // Clear the output only when we get response from the kernel
+            updateCell({ outputs: [] });
+            setCodeStatus(2);
+          } else {
+            // End of output
+            setCodeStatus(0);
           }
           break;
         case 'execute_input':
           // Post-run execution count (usually second message)
-          this.executionCount = msgContent.execution_count;
+          updateCell({ execution_count: msgContent.execution_count });
           break;
         case 'error':
-          this.setState({ codeStatus: -2 });
+          setCodeStatus(-2);
         // Fall through
         case 'stream':
         case 'display_data':
         case 'execute_result':
           // Execution Results - add to outputs array (third to second last message)
-          this.updateOutputs({
+          const output = {
             ...msgContent,
             output_type: msgType,
+          };
+          dispatch({
+            type: 'notebook/addOutput',
+            payload: { index: cellIndex, output },
           });
           break;
         case 'shutdown_reply':
-          this.resetSource(true, false, { codeStatus: -2 });
+          updateCell({ output: [] });
+          setCodeStatus(-2);
           break;
         default:
       }
     }
   }
 
-  // %%%%%%%%%%%%%%%%%%%%%%%%
-  // Source & Cell Management
-  // %%%%%%%%%%%%%%%%%%%%%%%%
-  resetSource(
-    clearOutput = true,
-    setExecCount = null,
-    resetVals = { codeStatus: 0 },
-    callback
-  ) {
-    if (clearOutput) this.updateOutputs(null, true);
-    if (setExecCount !== false) {
-      this.executionCount = setExecCount;
-    }
-    if (resetVals) this.setState(resetVals, callback);
-  }
-
-  getSourceData() {
-    return {
-      execution_count: this.executionCount,
-      metadata: {
-        editable: this.editable,
-        jupyter: {
-          source_hidden: !Boolean(this.state.shown),
-        },
-      },
-      source: this.source,
-    };
-  }
-
-  toggleLang() {
+  function toggleLang() {
     // Stop any on-going execution
     let signalStatus = true;
-    if (this.state.codeStatus > 0)
-      signalStatus = this.kernelMessenger.signalKernel(2);
-    if (signalStatus)
-      this.resetSource(true, null, (state) => {
-        return {
-          cellType: state.cellType === 'code' ? 'markdown' : 'code',
-          codeStatus: -1,
-        };
+    if (codeStatus > 0) signalStatus = kernelMessenger.signalKernel(2);
+    if (signalStatus) {
+      setCodeStatus(-1);
+      updateCell({
+        output: [],
+        cell_type: cellType === 'code' ? 'markdown' : 'code',
       });
-  }
-
-  // %%%%%%%%%%%%%%
-  // Text Callbacks
-  // %%%%%%%%%%%%%%
-  updateContent(code) {
-    // Store the changes to the content
-    // Done so that we can restore it if the cell is hidden
-    this.source = code.split(/^/m);
-  }
-
-  keyCallback(e) {
-    // If shift-enter - call the callback
-    if (e.shiftKey && e.which === 13) {
-      this.runCallback(this.source);
-      e.preventDefault();
-      e.stopPropagation();
     }
   }
 
-  preProcessMarkdown(text) {
+  function preProcessMarkdown(text) {
     const fixMath = (text) => {
       // '$$' has to be in a separate new line to be rendered as a block math equation.
       const re = /\n?\s*\$\$\s*\n?/g;
@@ -191,85 +146,93 @@ export default class Source extends React.PureComponent {
     return res;
   }
 
-  render() {
-    // SWITCH BETWEEN CELL TYPES
-    let highlightType, executionCount;
-    switch (this.state.cellType) {
-      case 'code':
-        this.runCallback = (_) => this.run(this.source);
-        highlightType = languages.py;
-        executionCount =
-          this.executionCount !== null ? this.executionCount : ' ';
-        break;
-      case 'markdown':
-        this.runCallback = () => this.setState({ showMarkdown: true });
-        break;
-      default:
-        break;
-    }
-
-    // DISPLAY EDITOR OR RENDERED MARKDOWN
-    const mergedCode = this.source.join('');
-    let cellContent;
-    if (!this.state.showMarkdown) {
-      cellContent = (
-        <div className="cell-content source-code">
-          {/* Actual code cell */}
-          <TextEditor
-            className="source-code-main"
-            defaultValue={mergedCode}
-            onChange={this.onChangeCallback}
-            onKeyDown={this.onKeyCallback}
-            disabled={
-              !(this.editable === undefined || this.editable) ? true : false
-            }
-            highlightType={highlightType}
-          />
-          {/* Run time and Language switcher */}
-          <div className="cell-status">
-            <Timer status={this.state.codeStatus} />
-            <button
-              className="block-btn cell-type-btn"
-              onClick={(_) => this.toggleLang()}
-            >
-              {this.state.cellType}
-            </button>
-          </div>
-        </div>
-      );
+  // Callbacks passed into children
+  const runCallback = useCallback(() => {
+    // Set run-callback and execution count based on cell-type
+    if (cellType === 'code') {
+      run(source);
     } else {
-      const newSource = this.preProcessMarkdown(mergedCode);
-      const reenableEditing = () => this.setState({ showMarkdown: false });
-      cellContent = (
-        <div
-          className="cell-content source-markdown"
-          onDoubleClick={() => reenableEditing()}
-        >
-          <ReactMarkdown
-            remarkPlugins={[RemarkGFM, RemarkMath]}
-            rehypePlugins={[RehypeKatex]}
-          >
-            {newSource}
-          </ReactMarkdown>
-        </div>
-      );
+      setShowMarkdown(true);
     }
+  }, [cellType, source]);
 
-    return this.state.shown === 0 ? (
-      <div className="source-hidden" />
-    ) : (
-      <div className="cell-row" tabIndex="0" onKeyDown={this.onKeyCallback}>
-        {/* Left side of the code editor */}
-        <RunBtn
-          runCallback={this.runCallback}
-          codeStatus={this.state.codeStatus}
-          executionCount={executionCount}
-          showMarkdown={this.state.showMarkdown}
-          isMarkdownCell={this.state.cellType === 'markdown'}
+  const updateContent = useCallback(
+    (code) => updateCell({ source: code.split(/^/m) }),
+    []
+  );
+
+  const keyCallback = useCallback((e) => {
+    // If shift-enter - call the callback
+    if (e.shiftKey && e.which === 13) {
+      runCallback();
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, [runCallback]);
+
+  // Build either editor or rendered markdown view
+  let cellContent;
+  const shown = jupyter && jupyter.source_hidden ? 0 : 1,
+    mergedCode = source.join(''),
+    { execution_count: executionCount } = cell,
+    { editable } = metadata;
+
+  if (!showMarkdown) {
+    cellContent = (
+      <div className="cell-content source-code">
+        {/* Actual code cell */}
+        <TextEditor
+          className="source-code-main"
+          defaultValue={mergedCode}
+          onChange={updateContent}
+          // onKeyDown={keyCallback}
+          disabled={!(editable === undefined || editable) ? true : false}
+          highlightType={cellType === 'code' ? languages.py : undefined}
         />
-        {/* Code itself (or markdown) */}
-        {cellContent}
+        {/* Run time and Language switcher */}
+        <div className="cell-status">
+          <Timer status={codeStatus} />
+          <button className="block-btn cell-type-btn" onClick={toggleLang}>
+            {cellType}
+          </button>
+        </div>
+      </div>
+    );
+  } else {
+    const newSource = preProcessMarkdown(mergedCode);
+    const reenableEditing = () => setShowMarkdown(false);
+    cellContent = (
+      <div
+        className="cell-content source-markdown"
+        onDoubleClick={() => reenableEditing()}
+      >
+        <ReactMarkdown
+          remarkPlugins={[RemarkGFM, RemarkMath]}
+          rehypePlugins={[RehypeKatex]}
+        >
+          {newSource}
+        </ReactMarkdown>
       </div>
     );
   }
+
+  // TODO: Look into TextEditor & RunBtn for un-needed renders
+  return shown === 0 ? (
+    <div className="source-hidden" />
+  ) : (
+    <div className="cell-row" tabIndex="0" onKeyDown={keyCallback}>
+      {/* Left side of the code editor */}
+      <RunBtn
+        codeStatus={codeStatus}
+        runCallback={runCallback}
+        showMarkdown={showMarkdown}
+        isMarkdownCell={cellType === 'markdown'}
+        executionCount={executionCount !== null ? executionCount : ' '}
+      />
+      {/* Code itself (or markdown) */}
+      {cellContent}
+    </div>
+  );
 }
+
+export default React.memo(Source);

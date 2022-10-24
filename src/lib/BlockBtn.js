@@ -1,6 +1,7 @@
+import React from 'react';
 import './scss/BlockBtn.scss';
 
-export default function BlockBtn(props) {
+function BlockBtn(props) {
   const { callback, text, className, children, ...btnProps } = props;
   return (
     <button
@@ -12,3 +13,5 @@ export default function BlockBtn(props) {
     </button>
   );
 }
+
+export default React.memo(BlockBtn);

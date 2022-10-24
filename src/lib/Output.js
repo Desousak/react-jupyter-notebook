@@ -1,5 +1,7 @@
 import React from 'react';
 import Ansi from 'ansi-to-react';
+import { useSelector } from 'react-redux';
+
 import { setCharAt } from './Helpers';
 
 import './scss/Output.scss';
@@ -136,11 +138,26 @@ function buildOutputRow(htmlContent, key = null, execCount = null) {
 // TODO: MAKE RAPID OUTPUT UPDATES FASTER
 function Output(props) {
   // Get the cell, outputs, and metadata
-  const { outputs = [], shown } = props;
+  const { cellIndex } = props;
+  const outputs = useSelector(
+    (state) => state.notebook.data.cells[cellIndex].outputs
+  );
+  const metadata = useSelector(
+    (state) => state.notebook.data.cells[cellIndex].metadata
+  );
+  // Process output data
   const res = preProcessStreams(outputs);
   let processedOutputs = res.outputs;
   let streamTotal = res.total;
-
+  // Parse visibility status
+  let shown = 0;
+  if (metadata.jupyter && metadata.jupyter.outputs_hidden) {
+    shown = 0;
+  } else if (metadata.collapsed) {
+    shown = 2;
+  } else {
+    shown = 1;
+  }
   // Determine whether to limit stream output
   const canLimitStreams = shown === 1 && streamTotal > MAX_LINES;
   let streamCount = 0;
@@ -211,7 +228,7 @@ function Output(props) {
               // Output without execution_count
               // eslint-disable-next-line no-fallthrough
               case 'display_data':
-                let output_data = output['data'],
+                let output_data = { ...output['data'] },
                   outputDataKey = Object.keys(output_data)[0];
                 // Can sometimes be sent as string??
                 if (typeof output_data[outputDataKey] === 'string')

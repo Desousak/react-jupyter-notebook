@@ -9,6 +9,7 @@ function App(props) {
   const [state, setState] = useState({
     rawIpynb: nb_test,
   });
+  const [messenger, changeMessenger] = useState({ msg: ExampleMessenger });
 
   return (
     <React.Fragment>
@@ -17,7 +18,7 @@ function App(props) {
           display: 'flex',
           gap: '1rem',
           alignItems: 'center',
-          marginBottom: '1rem'
+          marginBottom: '1rem',
         }}
       >
         <span>Load .ipynb file:</span>
@@ -37,13 +38,20 @@ function App(props) {
             }
           }}
         />
+        <span>Use Pyolite Kernel:</span>
+        <input
+          name="kernelSelector"
+          type="checkbox"
+          onChange={() =>
+            messenger.msg === ExampleMessenger
+              ? changeMessenger({ msg: PyoliteMessenger })
+              : changeMessenger({ msg: ExampleMessenger })
+          }
+        />
       </div>
 
       {!state.rawIpynb ? null : (
-        <JupyterViewer
-          rawIpynb={state.rawIpynb}
-          MessengerObj={PyoliteMessenger}
-        />
+        <JupyterViewer rawIpynb={state.rawIpynb} MessengerObj={messenger.msg} />
       )}
     </React.Fragment>
   );
