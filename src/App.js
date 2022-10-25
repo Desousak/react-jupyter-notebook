@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import nb_test from './nb_test.json';
-import { JupyterViewer } from './lib/JupyterViewer';
+import { JupyterViewer, useKernelState } from './lib/JupyterViewer';
 
 import ExampleMessenger from './ExampleMessenger';
 import PyoliteMessenger from './PyoliteMessenger';
@@ -9,7 +9,9 @@ function App(props) {
   const [state, setState] = useState({
     rawIpynb: nb_test,
   });
-  const [messenger, changeMessenger] = useState({ msg: ExampleMessenger });
+  const [messenger, changeMessenger] = useState({ msg: PyoliteMessenger });
+  const [messengerInst, messengerStatus] = useKernelState(messenger.msg);
+  console.log('App Render:', 'Kernel =', messengerInst, messengerStatus);
 
   return (
     <React.Fragment>
@@ -51,7 +53,7 @@ function App(props) {
       </div>
 
       {!state.rawIpynb ? null : (
-        <JupyterViewer rawIpynb={state.rawIpynb} MessengerObj={messenger.msg} />
+        <JupyterViewer rawIpynb={state.rawIpynb} Messenger={messengerInst} />
       )}
     </React.Fragment>
   );
