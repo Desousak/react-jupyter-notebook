@@ -1,7 +1,7 @@
 var messengerProxy = null;
+
 var buildMessengerProxy = (messenger) => {
-  console.log('Updating messenger...');
-  messengerProxy = new messenger();
+  messengerProxy = messenger;
 };
 
 export { messengerProxy as default, buildMessengerProxy };

@@ -5,9 +5,10 @@ function delay(time) {
 }
 
 export default class ExampleMessenger extends KernelMessenger {
-  constructor() {
-    super();
-    this.timeout = null;
+  timeout = null;
+
+  connectToKernel() {
+    return delay(2000).then(() => true);
   }
 
   get kernelInfo() {
@@ -33,12 +34,11 @@ export default class ExampleMessenger extends KernelMessenger {
     });
   }
 
-  get connected() {
-    return true;
-  }
-
   runCode(code, callbackFunc) {
-    return new Promise((res) => {
+    return new Promise((res, rej) => {
+      if (!this.connected) {
+        rej('Kernel Execute Error: Not ready!');
+      }
       const sendResponse = () => {
         // Signal our "kernel" is busy
         callbackFunc({
@@ -80,13 +80,13 @@ export default class ExampleMessenger extends KernelMessenger {
       if (this.timeout !== null) {
         this.timeout.then(sendResponse);
       } else {
-        this.timeout = new Promise((res) => res()).then((_) => sendResponse());
+        this.timeout = Promise.resolve().then((_) => sendResponse());
       }
     });
   }
 
   signalKernel(signal) {
     // Return whether the execution worked or not
-    return Promise.reject("Kernel Signal Error: Not available");
+    return Promise.reject('Kernel Signal Error: Not available');
   }
 }

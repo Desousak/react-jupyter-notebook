@@ -48,11 +48,10 @@ function Source(props) {
     if (codeStatus <= 0) {
       // Reset source but keep output for now - will be reset later
       updateCell({ execution_count: null });
-      setCodeStatus(1);
       kernelMessenger
         .runCode(code, parseResponse)
         .then(() => {})
-        .catch(() => setCodeStatus(-2));
+        .catch((e) => console.error(e));
     } else {
       // Stop execution
       kernelMessenger
@@ -161,14 +160,17 @@ function Source(props) {
     []
   );
 
-  const keyCallback = useCallback((e) => {
-    // If shift-enter - call the callback
-    if (e.shiftKey && e.which === 13) {
-      runCallback();
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }, [runCallback]);
+  const keyCallback = useCallback(
+    (e) => {
+      // If shift-enter - call the callback
+      if (e.shiftKey && e.which === 13) {
+        runCallback();
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    },
+    [runCallback]
+  );
 
   // Build either editor or rendered markdown view
   let cellContent;

@@ -7,12 +7,12 @@ import Block from './Block';
 import BlockBtn from './BlockBtn';
 import { genCellName, addCell } from './Helpers';
 import { buildMessengerProxy } from './MessengerProxy';
-import KernelMessenger from './KernelMessenger';
+import KernelMessenger, { useKernelState } from './KernelMessenger';
 
 import './scss/JupyterViewer.scss';
 
 function JupyterViewer(props) {
-  const { rawIpynb, MessengerObj } = props;
+  const { rawIpynb, Messenger } = props;
   const dispatch = useDispatch();
   const cells = useSelector((state) => state.notebook.data.cells);
   const clickCellIndex = useSelector((state) => state.notebook.clickCellIndex);
@@ -43,8 +43,8 @@ function JupyterViewer(props) {
 
   // Update Kernel Messenger
   useEffect(() => {
-    buildMessengerProxy(MessengerObj);
-  }, [dispatch, MessengerObj]);
+    buildMessengerProxy(Messenger);
+  }, [Messenger]);
 
   return (
     <div className="jupyter-viewer">
@@ -75,22 +75,21 @@ function JupyterViewer(props) {
   );
 }
 
-function ReduxWrap(props) {
+const ReduxWrap = React.memo((props) => {
   return (
     <Provider store={store}>
       <JupyterViewer {...props} />{' '}
     </Provider>
   );
-}
+});
 
 JupyterViewer.defaultProps = {
   rawIpynb: { cells: [] },
-  MessengerObj: KernelMessenger,
 };
 
 JupyterViewer.propTypes = {
   rawIpynb: PropTypes.object,
-  MessengerObj: PropTypes.func,
+  Messenger: PropTypes.object,
 };
 
-export { ReduxWrap as JupyterViewer, KernelMessenger };
+export { ReduxWrap as JupyterViewer, KernelMessenger, useKernelState };
