@@ -1,8 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-// Exhaustive deps check is disabled because functions
-// such as 'run' are known not to change (ref might change but same functionality)
-// TODO: Check if all functions should be wrapped in useCallback, or reworked
-
 import React, { useCallback, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -36,79 +31,6 @@ function Source(props) {
   const [showMarkdown, setShowMarkdown] = useState(
     source.length > 0 && cellType === 'markdown' ? true : false
   );
-
-  function updateCell(newCell) {
-    dispatch({
-      type: 'notebook/updateCell',
-      payload: { index: cellIndex, cell: newCell },
-    });
-  }
-
-  function run(code) {
-    if (codeStatus <= 0) {
-      // Reset source but keep output for now - will be reset later
-      updateCell({ execution_count: null });
-      kernelMessenger
-        .runCode(code, parseResponse)
-        .then(() => {})
-        .catch((e) => console.error(e));
-    } else {
-      // Stop execution
-      kernelMessenger
-        .signalKernel(2)
-        .then(() => setCodeStatus(-2))
-        .catch(() => {});
-    }
-  }
-
-  function parseResponse(msg) {
-    // Check is used to prevent running code & change of cell type race condition
-    if (cellType !== 'markdown') {
-      // Messages expected (in order of occurrence)
-      const msgType = msg.header.msg_type,
-        msgContent = msg.content;
-
-      switch (msgType) {
-        case 'status':
-          // Kernel status (usually busy or idle -> first and last messages)
-          let kernelBusy = msgContent.execution_state === 'busy';
-          if (kernelBusy) {
-            // Clear the output only when we get response from the kernel
-            updateCell({ outputs: [] });
-            setCodeStatus(2);
-          } else {
-            // End of output
-            setCodeStatus(0);
-          }
-          break;
-        case 'execute_input':
-          // Post-run execution count (usually second message)
-          updateCell({ execution_count: msgContent.execution_count });
-          break;
-        case 'error':
-          setCodeStatus(-2);
-        // Fall through
-        case 'stream':
-        case 'display_data':
-        case 'execute_result':
-          // Execution Results - add to outputs array (third to second last message)
-          const output = {
-            ...msgContent,
-            output_type: msgType,
-          };
-          dispatch({
-            type: 'notebook/addOutput',
-            payload: { index: cellIndex, output },
-          });
-          break;
-        case 'shutdown_reply':
-          updateCell({ output: [] });
-          setCodeStatus(-2);
-          break;
-        default:
-      }
-    }
-  }
 
   function toggleLang() {
     // Stop any on-going execution
@@ -145,7 +67,90 @@ function Source(props) {
     return res;
   }
 
-  // Callbacks passed into children
+  // Memoized runner functions 
+  // Functions can be passed into children, so these prevent needless rerenders
+  const updateCell = useCallback(
+    (newCell) => {
+      dispatch({
+        type: 'notebook/updateCell',
+        payload: { index: cellIndex, cell: newCell },
+      });
+    },
+    [dispatch, cellIndex]
+  );
+
+  const parseResponse = useCallback(
+    (msg) => {
+      // Check is used to prevent running code & change of cell type race condition
+      if (cellType !== 'markdown') {
+        // Messages expected (in order of occurrence)
+        const msgType = msg.header.msg_type,
+          msgContent = msg.content;
+
+        switch (msgType) {
+          case 'status':
+            // Kernel status (usually busy or idle -> first and last messages)
+            let kernelBusy = msgContent.execution_state === 'busy';
+            if (kernelBusy) {
+              // Clear the output only when we get response from the kernel
+              updateCell({ outputs: [] });
+              setCodeStatus(2);
+            } else {
+              // End of output
+              setCodeStatus(0);
+            }
+            break;
+          case 'execute_input':
+            // Post-run execution count (usually second message)
+            updateCell({ execution_count: msgContent.execution_count });
+            break;
+          case 'error':
+            setCodeStatus(-2);
+          // Fall through
+          case 'stream':
+          case 'display_data':
+          case 'execute_result':
+            // Execution Results - add to outputs array (third to second last message)
+            const output = {
+              ...msgContent,
+              output_type: msgType,
+            };
+            dispatch({
+              type: 'notebook/addOutput',
+              payload: { index: cellIndex, output },
+            });
+            break;
+          case 'shutdown_reply':
+            updateCell({ output: [] });
+            setCodeStatus(-2);
+            break;
+          default:
+        }
+      }
+    },
+    [cellIndex, cellType, dispatch, updateCell]
+  );
+
+  const run = useCallback(
+    (code) => {
+      if (codeStatus <= 0) {
+        // Reset source but keep output for now - will be reset later
+        updateCell({ execution_count: null });
+        kernelMessenger
+          .runCode(code, parseResponse)
+          .then(() => {})
+          .catch((e) => console.error(e));
+      } else {
+        // Stop execution
+        kernelMessenger
+          .signalKernel(2)
+          .then(() => setCodeStatus(-2))
+          .catch(() => {});
+      }
+    },
+    [codeStatus, parseResponse, updateCell]
+  );
+
   const runCallback = useCallback(() => {
     // Set run-callback and execution count based on cell-type
     if (cellType === 'code') {
@@ -153,7 +158,7 @@ function Source(props) {
     } else {
       setShowMarkdown(true);
     }
-  }, [cellType, source]);
+  }, [cellType, run, source]);
 
   const updateContent = useCallback(
     (code) => updateCell({ source: code.split(/^/m) }),

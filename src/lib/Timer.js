@@ -8,45 +8,40 @@ function Timer(props) {
   const [time, setTime] = useState(0.0),
     { status } = props;
   let prevTime = useRef(null),
-    exit = useRef(false);
-
-  const incrementTimer = (currTime) => {
-    if (prevTime.current !== null) {
-      const delta = currTime - prevTime.current;
-      setTime((test) => test + delta / 1000);
-    }
-    // Cleanup
-    if (!exit.current) {
-      prevTime.current = currTime;
-      requestAnimationFrame(incrementTimer);
-    } else {
-      exit.current = false;
-      prevTime.current = null;
-    }
-  };
+    animationID = useRef(null);
 
   useEffect(() => {
     if (status === 2) {
+      // Animation function
+      const incrementTimer = (currTime, repeat = true) => {
+        if (prevTime.current !== null) {
+          const delta = currTime - prevTime.current;
+          setTime((test) => test + delta / 1000);
+        }
+        prevTime.current = currTime;
+        if (repeat) animationID.current = requestAnimationFrame(incrementTimer);
+      };
+      // Set variables
       setTime(0.0);
-      exit.current = false;
-      requestAnimationFrame(incrementTimer);
+      prevTime.current = null;
+      animationID.current = requestAnimationFrame(incrementTimer);
+      // Cleanup
       return () => {
-        if (document.hasFocus()) {
-          exit.current = true;
-        } else {
-          // Calculate the time till the user refocuses the page
-          // TODO: Find a better method for this
+        cancelAnimationFrame(animationID.current);
+        if (document.visibilityState !== 'visible') {
+          // Hold time that the counter was *supposed* to finish at
+          // And resume when the user refocuses
+          // TODO: Find a more accurate method than this
           const refocusTime = performance.now();
           document.addEventListener(
             'visibilitychange',
             () => {
-              // Offset previous time by time spent offscreen
-              if (document.visibilityState === 'visible') {
-                exit.current = true;
-                prevTime.current += performance.now() - refocusTime;
-              }
+              if (document.visibilityState === 'visible')
+                incrementTimer(refocusTime, false);
             },
-            { once: true }
+            {
+              once: true,
+            }
           );
         }
       };
