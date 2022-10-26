@@ -25,11 +25,14 @@ export default class PyoliteMessenger extends KernelMessenger {
 
   runCode(code, callback) {
     const promise = new Promise((resolve, reject) => {
-      if (!this.connected) reject('Kernel Execute Error: Not connected');
-      this.#runQueue.push({ code, callback, resolve, reject });
-      if (this.#runQueue.length === 1) {
-        // First in queue - run your code
-        this.#execute(code);
+      if (!this.connected) {
+        reject('Kernel Execute Error: Not connected');
+      } else {
+        this.#runQueue.push({ code, callback, resolve, reject });
+        if (this.#runQueue.length === 1) {
+          // First in queue - run your code
+          this.#execute(code);
+        }
       }
     });
     return promise;

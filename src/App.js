@@ -9,7 +9,7 @@ function App(props) {
   const [state, setState] = useState({
     rawIpynb: nb_test,
   });
-  const [messenger, changeMessenger] = useState({ msg: PyoliteMessenger });
+  const [messenger, changeMessenger] = useState({ msg: ExampleMessenger });
   const [messengerInst, messengerStatus] = useKernelState(messenger.msg);
   console.log('App Render:', 'Kernel =', messengerInst, messengerStatus);
 
