@@ -8,7 +8,8 @@ export default class ExampleMessenger extends KernelMessenger {
   timeout = null;
 
   connectToKernel() {
-    return delay(2000).then(() => true);
+    // return delay(2000).then(() => true);
+    return Promise.resolve().then(() => true)
   }
 
   get kernelInfo() {
