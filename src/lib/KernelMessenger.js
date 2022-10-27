@@ -6,8 +6,6 @@ class KernelMessenger {
   #ready = null;
   // Boolean flag for the above
   #connected = false;
-  // Callbacks for each message received
-  _onMessages = [];
   // Callback for kernel reading up
   _onReady = [];
 
@@ -58,9 +56,6 @@ class KernelMessenger {
     return this.#connected;
   }
   set onReady(callback) {
-    this.addCallbacks('_onReady', callback);
-  }
-  set onMessages(callback) {
     this.addCallbacks('_onReady', callback);
   }
 
