@@ -8,26 +8,31 @@ function Timer(props) {
   const [time, setTime] = useState(0.0),
     { status } = props;
   let prevTime = useRef(null),
-    animationID = useRef(null);
+    exitAnimation = useRef(false);
 
   useEffect(() => {
     if (status === 2) {
-      // Animation function
+      // Animation function that increases the counter 
       const incrementTimer = (currTime, repeat = true) => {
-        if (prevTime.current !== null) {
-          const delta = currTime - prevTime.current;
-          setTime((test) => test + delta / 1000);
+        if (!exitAnimation.current || repeat === false) {
+          if (prevTime.current !== null) {
+            const delta = currTime - prevTime.current;
+            setTime((t) => t + delta / 1000);
+          }
+          prevTime.current = currTime;
+          if (repeat) requestAnimationFrame(incrementTimer);
         }
-        prevTime.current = currTime;
-        if (repeat) animationID.current = requestAnimationFrame(incrementTimer);
       };
       // Set variables
       setTime(0.0);
       prevTime.current = null;
-      animationID.current = requestAnimationFrame(incrementTimer);
+      exitAnimation.current = false;
+      requestAnimationFrame(incrementTimer);
+
       // Cleanup
       return () => {
-        cancelAnimationFrame(animationID.current);
+        exitAnimation.current = true;
+
         if (document.visibilityState !== 'visible') {
           // Hold time that the counter was *supposed* to finish at
           // And resume when the user refocuses
