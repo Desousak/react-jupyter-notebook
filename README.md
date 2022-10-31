@@ -84,26 +84,43 @@ class ExampleMessenger extends KernelMessenger {
 ```
 
 ```javascript
+import JupyterViewer, {
+  useKernelMessenger,
+  useKernelReady,
+} from 'react-jupyter-notebook';
+
+// If you want to update the kernel dynamically a provided hook can be used
+const [messenger, changeMessenger] = useKernelMessenger(ExampleMessenger);
+// A hook also exists for the kernel's state (whether it's ready, loading, or disconnected)
+const kernelReady = useKernelReady(kernelMessenger);
+
+function component() {
+  return <JupyterViewer rawIpynb={rawIpynb} messenger={messenger} />;
+}
+```
+
+```javascript
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { JupyterViewer } from 'react-jupyter-notebook';
+import JupyterViewer from 'react-jupyter-notebook';
 import nb_test from './nb_test.json'; // You need to read the .ipynb file into a JSON Object.
 import ExampleMessenger from './ExampleMessenger'; // Replace with your own messenger class
 
-// Remove "ExampleMessenger" if not using execution
 ReactDOM.render(
   <React.StrictMode>
-    <JupyterViewer rawIpynb={nb_test} MessengerObj={ExampleMessenger} />
+    <JupyterViewer rawIpynb={nb_test} messenger={new ExampleMessenger()} />
   </React.StrictMode>,
   document.getElementById('root')
 );
 ```
 
+
+
 ## Props
 
-| Prop name       | Type     | Description                                                           | (_default_) Values                            |
-| --------------- | -------- | --------------------------------------------------------------------- | --------------------------------------------- |
-| rawIpynb        | Object   | The JSON object converted from the .ipynb file.                       | `{ cells: [] }`                               |
+| Prop name       | Type     | Description                                                           | (_default_) Values                          |
+| --------------- | -------- | --------------------------------------------------------------------- | ------------------------------------------- |
+| rawIpynb        | Object   | The JSON object converted from the .ipynb file.                       | `{ cells: [] }`                             |
 | KernelMessenger | Function | The class responsible for handling interactions with a Jupyter kernel | [KernelMessenger](src/lib/JupyterViewer.js) |
 
 ## Todo
@@ -135,6 +152,6 @@ ReactDOM.render(
 
 - The current implementation of the Pyolite kernel has four parts:
   1. [pubic/pyodide.js](pubic/pyodide.js): [Pyodide](https://pyodide.org/en/stable/) is a Python distribution for the browser and Node.js based on WebAssembly. It is used to run the Jupyter Kernel.
-  2. [src/Pyolite-Kernel/](src/pyolite-kernel/): A copy of the Kernel class made by [@joyceerhl](https://github.com/joyceerhl/vscode-pyolite). 
+  2. [src/Pyolite-Kernel/](src/pyolite-kernel/): A copy of the Kernel class made by [@joyceerhl](https://github.com/joyceerhl/vscode-pyolite).
   3. [src/ExampleMessenger.js](src/ExampleMessenger.js): A class that interfaces with the Pyolite Kernel and forwards code & results to the library.
   4. [public/Wheels/](public/wheels/): The pure-python wheels that are loaded into Pyodide. Provided from the [JupyterLite Project](https://github.com/jupyterlite/jupyterlite).
