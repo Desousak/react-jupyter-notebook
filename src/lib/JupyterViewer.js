@@ -43,8 +43,9 @@ function JupyterViewer(props) {
   // Update Kernel Messenger
   useEffect(() => {
     // Initialize the singleton
-    const kernelMessenger = new MessengerProxy(messenger);
+    const kernelMessenger = new MessengerProxy();
     kernelMessenger.messenger = messenger;
+    console.log("Initializing!", messenger, kernelMessenger);
   }, [messenger]);
 
   return (
