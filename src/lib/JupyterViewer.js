@@ -74,13 +74,11 @@ function JupyterViewer(props) {
   );
 }
 
-const ReduxWrap = React.memo((props) => {
-  return (
-    <Provider store={store}>
-      <JupyterViewer {...props} />{' '}
-    </Provider>
-  );
-});
+const ReduxWrap = React.memo((props) => (
+  <Provider store={store}>
+    <JupyterViewer {...props} />{' '}
+  </Provider>
+));
 
 JupyterViewer.defaultProps = {
   rawIpynb: { cells: [] },
