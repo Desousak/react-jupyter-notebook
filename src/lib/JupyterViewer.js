@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import Block from './Block';
 import BlockBtn from './BlockBtn';
 import { genCellName, addCell } from './Helpers';
-import { buildMessengerProxy } from './MessengerProxy';
+import MessengerProxy from './MessengerProxy';
 
 import './scss/JupyterViewer.scss';
 
@@ -42,7 +42,9 @@ function JupyterViewer(props) {
 
   // Update Kernel Messenger
   useEffect(() => {
-    buildMessengerProxy(messenger);
+    // Initialize the singleton
+    const kernelMessenger = new MessengerProxy(messenger);
+    kernelMessenger.messenger = messenger;
   }, [messenger]);
 
   return (

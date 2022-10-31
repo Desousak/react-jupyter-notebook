@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import Timer from './Timer';
 import RunBtn from './RunBtn';
-import kernelMessenger from './MessengerProxy.js';
+import MessengerProxy from './MessengerProxy.js';
 
 import './scss/Source.scss';
 
@@ -31,6 +31,9 @@ function Source(props) {
   const [showMarkdown, setShowMarkdown] = useState(
     source.length > 0 && cellType === 'markdown' ? true : false
   );
+
+  // Prep the messenger
+  const kernelMessenger = new MessengerProxy().messenger;
 
   function toggleLang() {
     // Stop any on-going execution

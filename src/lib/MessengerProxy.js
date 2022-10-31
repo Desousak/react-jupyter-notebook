@@ -1,7 +1,20 @@
-var messengerProxy = null;
+export default class MessengerProxy {
+  #messenger = null;
 
-var buildMessengerProxy = (messenger) => {
-  messengerProxy = messenger;
-};
+  constructor() {
+    if (MessengerProxy.singleton) {
+      const singleton = MessengerProxy.singleton;
+      return singleton;
+    }
+    MessengerProxy.singleton = this;
+    return MessengerProxy.singleton;
+  }
 
-export { messengerProxy as default, buildMessengerProxy };
+  get messenger() {
+    return this.#messenger;
+  }
+  
+  set messenger(obj) {
+    if (obj) this.#messenger = obj;
+  }
+}
