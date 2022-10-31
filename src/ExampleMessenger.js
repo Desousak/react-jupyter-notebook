@@ -1,13 +1,14 @@
-import { KernelMessenger } from './lib/JupyterViewer';
+import { KernelMessenger } from './lib/index';
 
 function delay(time) {
   return new Promise((res, rej) => setTimeout(res, time));
 }
 
 export default class ExampleMessenger extends KernelMessenger {
-  constructor() {
-    super();
-    this.timeout = null;
+  timeout = null;
+
+  connectToKernel() {
+    return delay(2000).then(() => true);
   }
 
   get kernelInfo() {
@@ -33,60 +34,60 @@ export default class ExampleMessenger extends KernelMessenger {
     });
   }
 
-  get connected() {
-    return true;
-  }
-
   runCode(code, callbackFunc) {
-    return new Promise((res) => {
-      const sendResponse = () => {
-        // Signal our "kernel" is busy
-        callbackFunc({
-          header: { msg_type: 'status' },
-          content: { execution_state: 'busy' },
-        });
-        // Send the execution counter
-        callbackFunc({
-          header: { msg_type: 'execute_input' },
-          content: { execution_count: '?' },
-        });
-
-        const msDelay = 2000;
-        return delay(msDelay).then((_) => {
-          // Stream results
-          callbackFunc({
-            header: { msg_type: 'error' },
-            content: {
-              output_type: 'error',
-              traceback: ['Code entered was:\n'],
-            },
-          });
-          callbackFunc({
-            header: { msg_type: 'stream' },
-            content: {
-              name: 'stdout',
-              output_type: 'stream',
-              text: code,
-            },
-          });
-          // Signal our "kernel" is idle
+    return new Promise((res, rej) => {
+      if (!this.connected) {
+        rej('Kernel Execute Error: Not ready!');
+      } else {
+        const sendResponse = () => {
+          // Signal our "kernel" is busy
           callbackFunc({
             header: { msg_type: 'status' },
-            content: { execution_state: 'idle' },
+            content: { execution_state: 'busy' },
           });
-          res();
-        });
-      };
-      if (this.timeout !== null) {
-        this.timeout.then(sendResponse);
-      } else {
-        this.timeout = new Promise((res) => res()).then((_) => sendResponse());
+          // Send the execution counter
+          callbackFunc({
+            header: { msg_type: 'execute_input' },
+            content: { execution_count: '?' },
+          });
+
+          const msDelay = 2000;
+          return delay(msDelay).then((_) => {
+            // Stream results
+            callbackFunc({
+              header: { msg_type: 'error' },
+              content: {
+                output_type: 'error',
+                traceback: ['Code entered was:\n'],
+              },
+            });
+            callbackFunc({
+              header: { msg_type: 'stream' },
+              content: {
+                name: 'stdout',
+                output_type: 'stream',
+                text: code,
+              },
+            });
+            // Signal our "kernel" is idle
+            callbackFunc({
+              header: { msg_type: 'status' },
+              content: { execution_state: 'idle' },
+            });
+            res();
+          });
+        };
+        if (this.timeout !== null) {
+          this.timeout.then(sendResponse);
+        } else {
+          this.timeout = Promise.resolve().then((_) => sendResponse());
+        }
       }
     });
   }
 
   signalKernel(signal) {
     // Return whether the execution worked or not
-    return Promise.reject("Kernel Signal Error: Not available");
+    return Promise.reject('Kernel Signal Error: Not available');
   }
 }

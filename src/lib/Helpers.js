@@ -17,7 +17,7 @@ function genCellName(cell) {
   return cell;
 }
 
-// Generate a cell 
+// Generate a cell
 function genCell(type) {
   let newCell = {};
   switch (type) {
@@ -44,7 +44,6 @@ function genCell(type) {
 
 // Insert cell into cell store
 function addCell(dispatch, index, type = 'code') {
-  
   dispatch({
     type: 'notebook/insertCell',
     payload: { index, cell: genCell(type) },
@@ -72,4 +71,17 @@ function deleteCell(dispatch, index = null) {
   dispatch({ type: 'notebook/removeCell', payload: index });
 }
 
-export { setCharAt, genCellName, addCell, offsetAddCell, moveCell, deleteCell };
+// Run all passed functions with same args
+function runAll(funcs, ...args) {
+  if (Array.isArray(funcs)) for (let func of funcs) func(...args);
+}
+
+export {
+  setCharAt,
+  genCellName,
+  addCell,
+  offsetAddCell,
+  moveCell,
+  deleteCell,
+  runAll
+};

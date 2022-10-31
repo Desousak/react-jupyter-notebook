@@ -21,12 +21,18 @@
     "email": "kevindesousa3@gmail.com"
   },
   "files": [
-    "dist"
+    "dist",
+    "src/lib",
+    "babel.config.js"
   ],
-  "main": "dist/JupyterViewer.js",
+  "main": "dist/index.js",
   "dependencies": {
+    "@babel/cli": "^7.19.3",
+    "@babel/preset-env": "^7.19.4",
+    "@babel/preset-react": "^7.18.6",
     "@reduxjs/toolkit": "^1.8.6",
     "ansi-to-react": "^6.1.6",
+    "compile": "^0.0.2",
     "katex": "^0.16.2",
     "prismjs": "^1.29.0",
     "prop-types": "^15.8.1",
@@ -35,6 +41,7 @@
     "react-redux": "^8.0.4",
     "react-simple-code-editor": "^0.13.1",
     "react-syntax-highlighter": "^15.5.0",
+    "redux": "^4.2.0",
     "rehype-katex": "^6.0.2",
     "remark-gfm": "^3.0.1",
     "remark-math": "^5.1.1"
@@ -47,18 +54,27 @@
     "gh-pages": "^4.0.0",
     "http-proxy-middleware": "^2.0.6",
     "react-scripts": "^5.0.1",
+    "react-select": "^5.5.6",
     "sass": "^1.55.0",
     "uuid": "^9.0.0"
   },
   "peerDependencies": {
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "overrides": {
+    "ansi-to-react": {
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0"
+    }
   },
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
     "start": "export $(cat .env | xargs) && react-scripts start",
     "build": "export $(cat .env | xargs) && react-scripts build",
+    "install": "npm run compile",
+    "compile": "NODE_ENV=production npx babel src/lib -d dist --copy-files",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
