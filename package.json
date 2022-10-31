@@ -64,7 +64,7 @@
     "start": "export $(cat .env | xargs) && react-scripts start",
     "build": "export $(cat .env | xargs) && react-scripts build",
     "preinstall": "npm run compile",
-    "compile": "NODE_ENV=production babel src/lib -d dist --copy-files",
+    "compile": "NODE_ENV=production npx babel src/lib -d dist --copy-files",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
