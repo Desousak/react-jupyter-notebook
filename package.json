@@ -22,7 +22,8 @@
   },
   "files": [
     "dist",
-    "src/lib"
+    "src/lib",
+    "babel.config.js"
   ],
   "main": "dist/index.js",
   "dependencies": {
