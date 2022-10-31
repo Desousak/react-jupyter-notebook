@@ -26,6 +26,9 @@
   ],
   "main": "dist/index.js",
   "dependencies": {
+    "@babel/cli": "^7.19.3",
+    "@babel/preset-env": "^7.19.4",
+    "@babel/preset-react": "^7.18.6",
     "@reduxjs/toolkit": "^1.8.6",
     "ansi-to-react": "^6.1.6",
     "compile": "^0.0.2",
@@ -43,9 +46,6 @@
     "remark-math": "^5.1.1"
   },
   "devDependencies": {
-    "@babel/cli": "^7.19.3",
-    "@babel/preset-env": "^7.19.4",
-    "@babel/preset-react": "^7.18.6",
     "@jupyterlab/services": "*",
     "@lumino/coreutils": "*",
     "@lumino/disposable": "*",
