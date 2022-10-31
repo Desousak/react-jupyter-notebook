@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import nb_test from './nb_test.json';
-import { JupyterViewer, useKernelMessenger } from './lib/JupyterViewer';
+import JupyterViewer, { useKernelMessenger, useKernelReady } from './lib/index';
 
 import ExampleMessenger from './ExampleMessenger';
 import PyoliteMessenger from './PyoliteMessenger';
@@ -14,22 +14,6 @@ const kernelOptions = [
   { value: 'PyoliteMessenger', label: 'Pyolite', class: PyoliteMessenger },
 ];
 
-function useKernelReady(messenger) {
-  // A hook for the kernel messenger status
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    // Subscribe to object's ready status
-    const handleStatusChange = (res) => setReady(res);
-    messenger.onReady = handleStatusChange;
-    // Catch events where the kernel is ready before we could even catch it...
-    setReady(messenger.connected);
-    return () => setReady(false);
-  }, [messenger]);
-
-  return ready;
-}
-
 function useKernelInfo(messenger) {
   // A hook for the kernel messenger status
   const [info, setInfo] = useState({});
@@ -42,10 +26,10 @@ function useKernelInfo(messenger) {
 }
 
 function StatusBar(props) {
-  const { kernelMessenger, changeMessenger } = props;
+  const { kernelMessenger, changeMessenger, setIypnb } = props;
   const kernelReady = useKernelReady(kernelMessenger);
   const kernelInfo = useKernelInfo(kernelMessenger);
-  
+
   // Parse names for the messenger, and the kernel itself
   const messengerName = kernelMessenger
       ? kernelMessenger.constructor.name
@@ -54,41 +38,8 @@ function StatusBar(props) {
 
   return (
     <div id="kernel-status-bar">
-      <div className="add-buttons">TBD</div>
-      <span id="kernel-name">
-        Current Kernel: {kernelName}
-        {!kernelReady ? ' (*)' : ''}
-      </span>
-      <div id="kernel-select">
-        <Select
-          name="kernels"
-          id="kernel-selector"
-          options={kernelOptions}
-          onChange={(e) => changeMessenger(e.class)}
-          value={kernelOptions.find((e) => e.value === messengerName)}
-        />
-      </div>
-    </div>
-  );
-}
-
-function App(props) {
-  const [rawIpynb, setIypnb] = useState(nb_test);
-  const [messenger, changeMessenger] = useKernelMessenger(
-    kernelOptions[0].class
-  );
-
-  return (
-    <React.Fragment>
-      <div
-        style={{
-          display: 'flex',
-          gap: '1rem',
-          alignItems: 'center',
-          marginBottom: '1rem',
-        }}
-      >
-        <span>Load .ipynb file:</span>
+      <div className="load-file">
+        <span>Load notebook:</span>
         <input
           name="rawIpynb"
           type="file"
@@ -106,8 +57,46 @@ function App(props) {
           }}
         />
       </div>
+      <span id="kernel-name">
+        Current Kernel: {kernelName}&nbsp;
+        {/* Change chars on state */}
+        {(() => {
+          switch (kernelReady) {
+            case null:
+              return '(*)';
+            case false:
+              return '(!)';
+            default:
+            case true:
+              return '';
+          }
+        })()}
+      </span>
+      <div id="kernel-select">
+        <span>Available Kernels:</span>
+        <Select
+          name="kernels"
+          id="kernel-selector"
+          options={kernelOptions}
+          isDisabled={kernelReady === null}
+          onChange={(e) => changeMessenger(e.class)}
+          value={kernelOptions.find((e) => e.value === messengerName)}
+        />
+      </div>
+    </div>
+  );
+}
 
+function App(props) {
+  const [rawIpynb, setIypnb] = useState(nb_test);
+  const [messenger, changeMessenger] = useKernelMessenger(
+    kernelOptions[0].class
+  );
+
+  return (
+    <React.Fragment>
       <StatusBar
+        setIypnb={setIypnb}
         kernelMessenger={messenger}
         changeMessenger={(messenger) => changeMessenger(messenger)}
       />

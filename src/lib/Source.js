@@ -67,7 +67,7 @@ function Source(props) {
     return res;
   }
 
-  // Memoized runner functions 
+  // Memoized runner functions
   // Functions can be passed into children, so these prevent needless rerenders
   const updateCell = useCallback(
     (newCell) => {
@@ -162,7 +162,7 @@ function Source(props) {
 
   const updateContent = useCallback(
     (code) => updateCell({ source: code.split(/^/m) }),
-    []
+    [updateCell]
   );
 
   const keyCallback = useCallback(

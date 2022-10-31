@@ -23,7 +23,7 @@
   "files": [
     "dist"
   ],
-  "main": "dist/JupyterViewer.js",
+  "main": "dist/index.js",
   "dependencies": {
     "@reduxjs/toolkit": "^1.8.6",
     "ansi-to-react": "^6.1.6",
@@ -60,6 +60,7 @@
     "deploy": "gh-pages -d build",
     "start": "export $(cat .env | xargs) && react-scripts start",
     "build": "export $(cat .env | xargs) && react-scripts build",
+    "test": "BUILD_PATH='./dist' react-scripts build ./lib/",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

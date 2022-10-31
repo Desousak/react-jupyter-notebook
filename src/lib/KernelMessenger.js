@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { runAll } from './Helpers';
 
 class KernelMessenger {
   // Promise which resolves when connected
   #ready = null;
-  // Boolean flag for the above
-  #connected = false;
+  // null = hasn't initially connected yet, false/true = connected state
+  #connected = null;
   // Callback for kernel reading up
   _onReady = [];
 
@@ -40,8 +40,6 @@ class KernelMessenger {
     this.#ready = this.connectToKernel(...args).then((bool) => {
       this.#connected = bool;
       // Call the callback with this instance
-      // const onReady = this.constructor.onReady;
-      // if (onReady) onReady(bool);
       runAll(this._onReady, bool);
     });
   }
@@ -55,15 +53,6 @@ class KernelMessenger {
   get connected() {
     return this.#connected;
   }
-  set onReady(callback) {
-    this.addCallbacks('_onReady', callback);
-  }
-
-  // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  // Functions here MUST be implemented
-  // Functions that are defined as arrow functions
-  // MUST BE made arrow functions in the children
-  // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   get kernelInfo() {
     // Return a promise containing info about the kernel
     return Promise.resolve({
@@ -85,6 +74,15 @@ class KernelMessenger {
       help_links: [{ text: '', url: '' }],
     });
   }
+  set onReady(callback) {
+    this.addCallbacks('_onReady', callback);
+  }
+
+  // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  // Functions here MUST be implemented
+  // Functions that are defined as arrow functions
+  // MUST BE made arrow functions in the children
+  // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   connectToKernel(...args) {
     // Return a promise which resolves when the kernel loads in
     // The promise should resolve true/false for if the kernel is loaded
@@ -106,16 +104,30 @@ class KernelMessenger {
 }
 
 // A Hook which rebuilds KernelMessenger objects
+// May be used in the future to add ready hooks
 function useKernelMessenger(MssngObj) {
   const buildMessenger = (c) => new c();
   const [messenger, setInst] = useState(buildMessenger(MssngObj));
-  const updateMessenger = (NewMssngObj) => setInst(buildMessenger(NewMssngObj));
-  // useEffect(() => {
-  //   return () => {
-  //     // Do cleanup
-  //   };
-  // }, [messenger]);
+  const updateMessenger = (NewMssngObj) => {
+    setInst(buildMessenger(NewMssngObj));
+  };
   return [messenger, updateMessenger];
 }
 
-export { KernelMessenger as default, useKernelMessenger };
+function useKernelReady(messenger) {
+  // A hook for the kernel messenger status
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    // Subscribe to object's ready status
+    const handleStatusChange = (res) => setReady(res);
+    messenger.onReady = handleStatusChange;
+    // Catch events where the kernel is ready before we could even catch it...
+    setReady(messenger.connected);
+    return () => setReady(false);
+  }, [messenger]);
+
+  return ready;
+}
+
+export { KernelMessenger as default, useKernelMessenger, useKernelReady };

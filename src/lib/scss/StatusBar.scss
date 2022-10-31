@@ -20,19 +20,18 @@
     flex: 1;
   }
 
-  .add-buttons {
+  & > div {
     display: flex;
+    align-items: center;
     flex-direction: row;
-
-    .block-btn {
-      border-radius: 2px;
-    }
+    gap: 1rem;
   }
+
   #kernel-name {
     text-align: center;
   }
 
-  #kernel-select > * {
-    float: right;
+  #kernel-select {
+    justify-content: flex-end;
   }
 }

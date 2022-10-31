@@ -1,4 +1,4 @@
-import { KernelMessenger } from './lib/JupyterViewer';
+import { KernelMessenger } from './lib/index';
 
 function delay(time) {
   return new Promise((res, rej) => setTimeout(res, time));
@@ -8,8 +8,7 @@ export default class ExampleMessenger extends KernelMessenger {
   timeout = null;
 
   connectToKernel() {
-    // return delay(2000).then(() => true);
-    return Promise.resolve().then(() => true)
+    return delay(2000).then(() => true);
   }
 
   get kernelInfo() {

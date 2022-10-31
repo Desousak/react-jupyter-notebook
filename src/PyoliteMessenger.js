@@ -1,4 +1,4 @@
-import { KernelMessenger } from './lib/JupyterViewer';
+import { KernelMessenger } from './lib/index';
 import { PyoliteKernel } from './pyolite-kernel/pyoliteKernel.ts';
 
 export default class PyoliteMessenger extends KernelMessenger {

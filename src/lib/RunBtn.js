@@ -14,7 +14,7 @@ function RunBtn(props) {
 
   return (
     <div className="cell-info">
-      <div className="sticky-wrapper">
+      <div>
         {showMarkdown === false && (
           <div className="cell-run-btn">
             <BlockBtn callback={runCallback} hidden={hidden}>

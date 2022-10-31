@@ -7,7 +7,6 @@ import Block from './Block';
 import BlockBtn from './BlockBtn';
 import { genCellName, addCell } from './Helpers';
 import { buildMessengerProxy } from './MessengerProxy';
-import KernelMessenger, { useKernelMessenger } from './KernelMessenger';
 
 import './scss/JupyterViewer.scss';
 
@@ -92,4 +91,4 @@ JupyterViewer.propTypes = {
   messenger: PropTypes.object,
 };
 
-export { ReduxWrap as JupyterViewer, KernelMessenger, useKernelMessenger };
+export { ReduxWrap as JupyterViewer };
