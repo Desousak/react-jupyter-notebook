@@ -21,7 +21,8 @@
     "email": "kevindesousa3@gmail.com"
   },
   "files": [
-    "dist", "src/lib"
+    "dist",
+    "src/lib"
   ],
   "main": "dist/index.js",
   "dependencies": {
@@ -33,8 +34,10 @@
     "prop-types": "^15.8.1",
     "react-icons": "^4.4.0",
     "react-markdown": "^8.0.3",
+    "react-redux": "^8.0.4",
     "react-simple-code-editor": "^0.13.1",
     "react-syntax-highlighter": "^15.5.0",
+    "redux": "^4.2.0",
     "rehype-katex": "^6.0.2",
     "remark-gfm": "^3.0.1",
     "remark-math": "^5.1.1"
@@ -55,8 +58,14 @@
     "uuid": "^9.0.0"
   },
   "peerDependencies": {
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "overrides": {
+    "ansi-to-react": {
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0"
+    }
   },
   "scripts": {
     "predeploy": "npm run build",
