@@ -72,7 +72,7 @@
     "deploy": "gh-pages -d build",
     "start": "export $(cat .env | xargs) && react-scripts start",
     "build": "export $(cat .env | xargs) && react-scripts build",
-    "preinstall": "npm run compile",
+    "install": "npm run compile",
     "compile": "NODE_ENV=production npx babel src/lib -d dist --copy-files",
     "eject": "react-scripts eject"
   },
