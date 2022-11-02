@@ -15,12 +15,16 @@ export default class PyoliteMessenger extends KernelMessenger {
   }
 
   connectToKernel() {
+    // Starting to connect
+    this.updConnState(null);
     this.kernel = new PyoliteKernel({
       id: 'pyolite-kernel',
       name: 'Pyolite',
       sendMessage: (d) => this.kernelResponse(d),
     });
-    return this.kernel.ready.then(() => true);
+    // Connection done
+    // TODO: Check if connection fails
+    this.kernel.ready.then(() => this.updConnState(true));
   }
 
   runCode(code, callback) {

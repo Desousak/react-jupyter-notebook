@@ -28,11 +28,6 @@ npm install --save https://github.com/Desousak/react-jupyter-notebook.git
 import { KernelMessenger } from 'react-jupyter-notebook';
 
 class ExampleMessenger extends KernelMessenger {
-  constructor() {
-    // Init connection here
-    // Constructor is not passed any parameters
-  }
-
   get ready() {
     // Returns a promise which resolves when the kernel loads in initially
     return Promise.resolve();
@@ -65,6 +60,18 @@ class ExampleMessenger extends KernelMessenger {
     return false;
   }
 
+  set connected(bool) {
+    // Allows manually updating connected status if needed
+    this.#connected = bool;
+  }
+
+  connectToKernel() {
+    // this.updConnState(bool) is a callback that should be run on a connection change
+    // (connect = true, disconnect = false, connecting = null)
+    // Can be re-run multiple times for when states change
+    this.updConnState(null);
+  }
+
   runCode(code, callbackFunc) {
     // Run the code
     // Returns a promise which resolves once execution is completed
@@ -74,11 +81,6 @@ class ExampleMessenger extends KernelMessenger {
   signalKernel(signal) {
     // Returns a promise which resolves if signalling was successful
     return new Promise();
-  }
-
-  connected() {
-    // Returns true if connected, false otherwise
-    return false;
   }
 }
 ```
@@ -113,8 +115,6 @@ ReactDOM.render(
   document.getElementById('root')
 );
 ```
-
-
 
 ## Props
 

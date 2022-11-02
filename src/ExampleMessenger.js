@@ -8,7 +8,8 @@ export default class ExampleMessenger extends KernelMessenger {
   timeout = null;
 
   connectToKernel() {
-    return delay(2000).then(() => true);
+    this.updConnState(null);
+    delay(2000).then(() => this.updConnState(true));
   }
 
   get kernelInfo() {
@@ -34,19 +35,19 @@ export default class ExampleMessenger extends KernelMessenger {
     });
   }
 
-  runCode(code, callbackFunc) {
+  runCode(code, callback) {
     return new Promise((res, rej) => {
       if (!this.connected) {
         rej('Kernel Execute Error: Not ready!');
       } else {
         const sendResponse = () => {
           // Signal our "kernel" is busy
-          callbackFunc({
+          callback({
             header: { msg_type: 'status' },
             content: { execution_state: 'busy' },
           });
           // Send the execution counter
-          callbackFunc({
+          callback({
             header: { msg_type: 'execute_input' },
             content: { execution_count: '?' },
           });
@@ -54,14 +55,14 @@ export default class ExampleMessenger extends KernelMessenger {
           const msDelay = 2000;
           return delay(msDelay).then((_) => {
             // Stream results
-            callbackFunc({
+            callback({
               header: { msg_type: 'error' },
               content: {
                 output_type: 'error',
                 traceback: ['Code entered was:\n'],
               },
             });
-            callbackFunc({
+            callback({
               header: { msg_type: 'stream' },
               content: {
                 name: 'stdout',
@@ -70,7 +71,7 @@ export default class ExampleMessenger extends KernelMessenger {
               },
             });
             // Signal our "kernel" is idle
-            callbackFunc({
+            callback({
               header: { msg_type: 'status' },
               content: { execution_state: 'idle' },
             });

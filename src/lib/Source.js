@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import Timer from './Timer';
@@ -33,7 +33,7 @@ function Source(props) {
   );
 
   // Prep the messenger
-  const kernelMessenger = new MessengerProxy().messenger;
+  const kernelMessenger = useMemo(() => new MessengerProxy(), []);
 
   function toggleLang() {
     // Stop any on-going execution
