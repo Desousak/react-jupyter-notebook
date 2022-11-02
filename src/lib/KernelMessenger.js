@@ -116,7 +116,7 @@ function useKernelMessenger(MssngObj) {
 
 function useKernelReady(messenger) {
   // A hook for the kernel messenger status
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(messenger.connected);
 
   useEffect(() => {
     // Subscribe to object's ready status
