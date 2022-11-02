@@ -151,7 +151,7 @@ function Source(props) {
           .catch(() => {});
       }
     },
-    [codeStatus, parseResponse, updateCell]
+    [codeStatus, kernelMessenger, parseResponse, updateCell]
   );
 
   const runCallback = useCallback(() => {

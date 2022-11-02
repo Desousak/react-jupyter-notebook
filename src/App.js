@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import nb_test from './nb_test.json';
-import JupyterViewer, { useKernelMessenger, useKernelReady } from './lib/index';
+import Select from 'react-select';
 
+import JupyterViewer, { useKernelMessenger, useKernelReady } from './lib/index';
 import ExampleMessenger from './ExampleMessenger';
 import PyoliteMessenger from './PyoliteMessenger';
 
-import Select from 'react-select';
-import './lib/scss/StatusBar.scss';
+import './StatusBar.scss';
 
 // Prep kernel options
 const kernelOptions = [
@@ -26,7 +26,7 @@ function useKernelInfo(messenger) {
 }
 
 function StatusBar(props) {
-  const { kernelMessenger, changeMessenger, setIypnb } = props;
+  const { kernelMessenger, changeMessenger, setIpynb } = props;
   const kernelReady = useKernelReady(kernelMessenger);
   const kernelInfo = useKernelInfo(kernelMessenger);
 
@@ -48,7 +48,7 @@ function StatusBar(props) {
               const reader = new FileReader();
               reader.readAsText(e.target.files[0], 'UTF-8');
               reader.onload = (e) => {
-                setIypnb(JSON.parse(e.target.result));
+                setIpynb(JSON.parse(e.target.result));
               };
               reader.onerror = (e) => {
                 console.log('reader error!', e);
@@ -88,7 +88,7 @@ function StatusBar(props) {
 }
 
 function App(props) {
-  const [rawIpynb, setIypnb] = useState(nb_test);
+  const [rawIpynb, setIpynb] = useState(nb_test);
   const [messenger, changeMessenger] = useKernelMessenger(
     kernelOptions[0].class
   );
@@ -96,7 +96,7 @@ function App(props) {
   return (
     <React.Fragment>
       <StatusBar
-        setIypnb={setIypnb}
+        setIpynb={setIpynb}
         kernelMessenger={messenger}
         changeMessenger={(messenger) => changeMessenger(messenger)}
       />
