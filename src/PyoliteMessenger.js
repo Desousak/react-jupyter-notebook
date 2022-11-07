@@ -15,7 +15,10 @@ export default class PyoliteMessenger extends KernelMessenger {
   }
 
   deconstructor() {
-    this.kernel.dispose();
+    return new Promise((res, rej) => {
+      this.kernel.dispose();
+      res();
+    });
   }
 
   connectToKernel() {

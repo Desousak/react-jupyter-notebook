@@ -81,8 +81,10 @@ class KernelMessenger {
     this.addCallbacks('_onReady', callback);
   }
   deconstructor() {
-    // This code will be run when the class is about to be removed
+    // Will be run when the class is about to be removed
     // Can be used to disconnect from servers gracefully
+    // Returns a promise, which will resolve when ready to be removed
+    return Promise.resolve();
   }
 
   // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
