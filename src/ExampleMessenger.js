@@ -7,11 +7,6 @@ function delay(time) {
 export default class ExampleMessenger extends KernelMessenger {
   timeout = null;
 
-  connectToKernel() {
-    this.updConnState(null);
-    delay(2000).then(() => this.updConnState(true));
-  }
-
   get kernelInfo() {
     return Promise.resolve({
       implementation: 'Example',
@@ -33,6 +28,11 @@ export default class ExampleMessenger extends KernelMessenger {
       banner: 'Example Messenger: An example of the messaging framework.',
       help_links: [],
     });
+  }
+
+  connectToKernel() {
+    this.updConnState(null);
+    delay(2000).then(() => this.updConnState(true));
   }
 
   runCode(code, callback) {

@@ -1,6 +1,8 @@
 // A singleton proxy for the messenger
-// Forwards function refs to the messenger 
+// Forwards function refs to the messenger
 export default class MessengerProxy {
+  bruh = undefined;
+
   constructor() {
     if (MessengerProxy.singleton) {
       const singleton = MessengerProxy.singleton;
@@ -12,14 +14,23 @@ export default class MessengerProxy {
 
   set messenger(obj) {
     if (obj) {
+      // Signal class removal and swap
+      if (this.deconstructor) this.deconstructor();
+      this.messengerObj = obj;
+
       // Get public functions from the object
-      const methodNames = Object.getOwnPropertyNames(obj.constructor.prototype);
+      const methodNames = new Set();
+      while ((obj = Reflect.getPrototypeOf(obj))) {
+        let keys = Reflect.ownKeys(obj);
+        keys.forEach((k) => methodNames.add(k));
+      }
 
       // Create a reference to them from this class
       for (let key of methodNames) {
-        if (key !== 'constructor')
+        if (key !== 'constructor' && !key.includes('_')) {
           MessengerProxy.singleton.constructor.prototype[key] = (...args) =>
-            obj[key](...args);
+            this.messengerObj[key](...args);
+        }
       }
     }
   }

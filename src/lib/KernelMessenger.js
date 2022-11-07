@@ -80,6 +80,10 @@ class KernelMessenger {
   set onReady(callback) {
     this.addCallbacks('_onReady', callback);
   }
+  deconstructor() {
+    // This code will be run when the class is about to be removed
+    // Can be used to disconnect from servers gracefully
+  }
 
   // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   // Functions here MUST be implemented
@@ -104,13 +108,18 @@ class KernelMessenger {
 }
 
 // A Hook which rebuilds KernelMessenger objects
-// May be used in the future to add callbacks 
+// May be used in the future to add callbacks
 function useKernelMessenger(MssngObj) {
-  const buildMessenger = (c) => new c();
+  const buildMessenger = (c) => {
+    return new c();
+  };
+
   const [messenger, setInst] = useState(buildMessenger(MssngObj));
+
   const updateMessenger = (NewMssngObj) => {
     setInst(buildMessenger(NewMssngObj));
   };
+
   return [messenger, updateMessenger];
 }
 

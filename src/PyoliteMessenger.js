@@ -14,6 +14,10 @@ export default class PyoliteMessenger extends KernelMessenger {
     return super.connected && this.kernel;
   }
 
+  deconstructor() {
+    this.kernel.dispose();
+  }
+
   connectToKernel() {
     // Starting to connect
     this.updConnState(null);

@@ -64,6 +64,11 @@ class ExampleMessenger extends KernelMessenger {
     // Allows manually updating connected status if needed
     this.#connected = bool;
   }
+  
+  deconstructor() {
+    // This code will be run when the class is about to be removed
+    // Can be used to disconnect from servers gracefully
+  }
 
   connectToKernel() {
     // this.updConnState(bool) is a callback that should be run on a connection change
