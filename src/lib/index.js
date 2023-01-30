@@ -1,4 +1,4 @@
-import { JupyterViewer } from './JupyterViewer';
+import { JupyterViewer, getIpynb } from './JupyterViewer';
 import KernelMessenger, {
   useKernelMessenger,
   useKernelReady,
@@ -9,4 +9,5 @@ export {
   KernelMessenger,
   useKernelMessenger,
   useKernelReady,
+  getIpynb
 };

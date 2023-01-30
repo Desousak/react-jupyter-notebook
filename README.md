@@ -96,6 +96,7 @@ class ExampleMessenger extends KernelMessenger {
 import JupyterViewer, {
   useKernelMessenger,
   useKernelReady,
+  getIpynb
 } from 'react-jupyter-notebook';
 
 // If you want to update the kernel dynamically a provided hook can be used
@@ -104,6 +105,12 @@ const [messenger, changeMessenger] = useKernelMessenger(ExampleMessenger);
 const kernelReady = useKernelReady(kernelMessenger);
 
 function component() {
+  // If you need to obtain the jupyter data (for example: saving purposes)
+  // getIpynb() can be used
+  useEffect(() => {
+    const interval = setInterval(() => console.log(getIpynb()), 1000);
+    return () => clearInterval(interval);
+  }, []);
   return <JupyterViewer rawIpynb={rawIpynb} messenger={messenger} />;
 }
 ```

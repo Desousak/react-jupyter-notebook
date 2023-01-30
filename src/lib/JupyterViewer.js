@@ -76,6 +76,14 @@ function JupyterViewer(props) {
   );
 }
 
+function getIpynb(){
+  /* 
+  Returns the jupyter notebook data from the store
+  */
+  const state = store.getState();
+  return state.notebook.data;
+}
+
 const ReduxWrap = React.memo((props) => (
   <Provider store={store}>
     <JupyterViewer {...props} />{' '}
@@ -91,4 +99,4 @@ JupyterViewer.propTypes = {
   messenger: PropTypes.object,
 };
 
-export { ReduxWrap as JupyterViewer };
+export { ReduxWrap as JupyterViewer, getIpynb };
